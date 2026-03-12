@@ -35,3 +35,17 @@ prowlarr() {
   xattr -rd com.apple.quarantine /Applications/Prowlarr.app
   rm -rf /tmp/prowlarr
 }
+
+seerr() {
+  # https://docs.seerr.dev/getting-started/buildfromsource
+  which pnpm || (curl -fsSL https://get.pnpm.io/install.sh | sh - && source ~/.zshrc)
+  which node || HOMEBREW_NO_AUTO_UPDATE=1 brew install node@22
+  mkdir -p /tmp/seerr
+  pushd /tmp/seerr || return
+  git clone https://github.com/seerr-team/seerr.git .
+  git checkout main
+  CYPRESS_INSTALL_BINARY=0 pnpm install --frozen-lockfile
+  pnpm build
+  popd || return
+  sudo mv --force /tmp/seerr /opt
+}
