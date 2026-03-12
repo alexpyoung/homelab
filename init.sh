@@ -23,3 +23,15 @@ sonarr() {
   xattr -rd com.apple.quarantine /Applications/Sonarr.app
   rm -rf /tmp/sonarr
 }
+
+prowlarr() {
+  # https://prowlarr.com/#downloads-v3-macos
+  mkdir -p /tmp/prowlarr
+  curl -L -o /tmp/prowlarr/latest-arm64.zip "https://prowlarr.servarr.com/v1/update/master/updatefile?os=osx&runtime=netcore&arch=arm64&installer=true"
+  unzip /tmp/prowlarr/latest-arm64.zip -d /tmp/prowlarr
+
+  mv /tmp/prowlarr/Prowlarr.app /Applications/Prowlarr.app
+  codesign --force --deep -s - /Applications/Prowlarr.app
+  xattr -rd com.apple.quarantine /Applications/Prowlarr.app
+  rm -rf /tmp/prowlarr
+}
