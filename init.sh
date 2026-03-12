@@ -11,3 +11,15 @@ radarr() {
   xattr -rd com.apple.quarantine /Applications/Radarr.app
   rm -rf /tmp/radarr
 }
+
+sonarr() {
+  # https://sonarr.tv/#downloads-macos
+  mkdir -p /tmp/sonarr
+  curl -L -o /tmp/sonarr/latest-arm64.zip "https://services.sonarr.tv/v1/download/main/latest?version=4&os=macos&arch=arm64&installer=true"
+  unzip /tmp/sonarr/latest-arm64.zip -d /tmp/sonarr
+
+  mv /tmp/sonarr/Sonarr.app /Applications/Sonarr.app
+  codesign --force --deep -s - /Applications/Sonarr.app
+  xattr -rd com.apple.quarantine /Applications/Sonarr.app
+  rm -rf /tmp/sonarr
+}
