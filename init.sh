@@ -61,3 +61,15 @@ nginx() {
 dns() {
   cat ./hosts | sudo tee -a /etc/hosts
 }
+
+main() {
+  radarr
+  sonarr
+  prowlarr
+  seerr
+
+  nginx
+  dns
+}
+
+main "$@"
