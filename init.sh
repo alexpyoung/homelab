@@ -57,3 +57,7 @@ nginx() {
   sudo ln -s "$PWD/nginx" /usr/local/etc/nginx
   sudo ln -sf "$PWD/nginx/nginx.conf" /opt/homebrew/etc/nginx/nginx.conf
 }
+
+dns() {
+  cat ./hosts | sudo tee -a /etc/hosts
+}
