@@ -49,3 +49,11 @@ seerr() {
   popd || return
   sudo mv --force /tmp/seerr /opt
 }
+
+nginx() {
+  which nginx || HOMEBREW_NO_AUTO_UPDATE=1 brew install nginx
+  mkdir -p ./nginx/certs
+  openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./nginx/certs/local.key -out ./nginx/certs/local.crt -subj "/CN=localhost"
+  sudo ln -s "$PWD/nginx" /usr/local/etc/nginx
+  sudo ln -sf "$PWD/nginx/nginx.conf" /opt/homebrew/etc/nginx/nginx.conf
+}
