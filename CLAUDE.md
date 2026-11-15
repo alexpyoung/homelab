@@ -2,6 +2,12 @@
 
 Personal media homelab running natively on a single Apple Silicon Mac. No containers except FlareSolverr; everything else is a macOS app/binary supervised by `launchd` and fronted by an nginx reverse proxy. The repo is the declarative-ish source of truth: install scripts, launchd plists, nginx vhosts, and DNS entries.
 
+## Principles
+
+- For every new feature, pick the most reliable, best-suited tool for the job (official install method, pinned versions, supported config over workarounds).
+- When planning, favor the simplest implementation that works; remove moving parts rather than add them.
+- Keep commits small and atomic: one logical change per commit.
+
 ## Stack
 
 | Service      | Role                          | Runs as                                   | Port  |
