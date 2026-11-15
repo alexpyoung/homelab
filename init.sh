@@ -62,10 +62,6 @@ seerr() {
 
 nginx() {
   command -v nginx >/dev/null || HOMEBREW_NO_AUTO_UPDATE=1 brew install nginx
-  mkdir -p ./nginx/certs
-  if [[ ! -f ./nginx/certs/local.crt ]]; then
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./nginx/certs/local.key -out ./nginx/certs/local.crt -subj "/CN=localhost"
-  fi
   sudo mkdir -p /usr/local/etc
   sudo ln -sfn "$PWD/nginx" /usr/local/etc/nginx
   sudo ln -sf "$PWD/nginx/nginx.conf" /opt/homebrew/etc/nginx/nginx.conf
