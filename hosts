@@ -1,4 +1,3 @@
-
 # Begin homelab
 127.0.0.1 seerr.lab
 127.0.0.1 radarr.lab
@@ -6,4 +5,5 @@
 127.0.0.1 prowlarr.lab
 127.0.0.1 qbittorrent.lab
 127.0.0.1 plex.lab
+127.0.0.1 flaresolverr.lab
 # End homelab
