@@ -1,21 +1,28 @@
 # homelab
+Dashboard: http://lab.alexyoung.io (tailnet only). Each service is at `http://<service>.lab.alexyoung.io`.
+
+## Setup
+```
+$ ./init.sh   # install apps, link configs (uses sudo)
+$ cp .env.example .env   # fill in Homepage widget keys
+$ ./start.sh
+```
 ## Helpful Commands
 ### Tail Logs
 ```
 $ tail -f ~/Library/Application\ Support/Radarr/logs/radarr.debug.txt
 ```
-### Test Public DNS
+### Test DNS
 ```
-$ dig +short tv.alexyoung.io
+$ dig +short seerr.lab.alexyoung.io   # expect the homelab's Tailscale IP
 ```
 ## Architecture
 ```mermaid
 flowchart
-    Device01--(a) Public DNS-->CNAME
-    CNAME-->homelab
     subgraph tailnet
         subgraph homelab
             nginx{nginx}
+            nginx-->homepage
             nginx-->seerr
             nginx-->plex
             seerr-->radarr
@@ -28,7 +35,7 @@ flowchart
             qbittorrent-->fs
             plex-->fs
         end
-        Device01--(b) Private DNS-->homelab
-        Device02--(b) Private DNS-->homelab
+        Device01--"*.lab.alexyoung.io"-->nginx
+        Device02--"*.lab.alexyoung.io"-->nginx
     end
 ```
