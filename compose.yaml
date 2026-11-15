@@ -1,0 +1,11 @@
+name: homelab
+
+services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:v3.5.2
+    container_name: flaresolverr
+    environment:
+      LOG_LEVEL: info
+    ports:
+      - 8191:8191
+    restart: unless-stopped

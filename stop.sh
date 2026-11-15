@@ -2,7 +2,7 @@
 
 main() {
     cd "$(dirname "$0")" || exit 1
-    docker stop flaresolverr
+    docker compose stop
     local -r domain="gui/$(id -u)"
     for plist in ./launchctl/*.plist; do
         local service
