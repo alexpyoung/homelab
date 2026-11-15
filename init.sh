@@ -72,12 +72,6 @@ logs() {
   sudo chown "$USER" /usr/local/var/log
 }
 
-dns() {
-  # Replace the homelab block in /etc/hosts rather than appending a duplicate
-  sudo sed -i '' '/^# Begin homelab$/,/^# End homelab$/d' /etc/hosts
-  sudo tee -a /etc/hosts < ./hosts >/dev/null
-}
-
 main() {
   cd "$(dirname "$0")" || exit 1
   logs
@@ -89,7 +83,6 @@ main() {
   seerr
 
   nginx
-  dns
 }
 
 main "$@"
