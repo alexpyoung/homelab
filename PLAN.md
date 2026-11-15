@@ -17,7 +17,9 @@ Snapshot as of 2026-11-15. Last commit 2026-06-09; the repo has been idle ~5 mon
 - Was: local `main` 4 ahead / 1 behind `origin/main`, with an unsquashed fixup.
 - 2026-11-15: rebased onto `origin/main` (fixup squashed into `fix(launchctl): makes scripts idempotent`) and fast-forward pushed. `7962843 wip` keeps its message since it was already public.
 
-## Uncommitted work in progress (main checkout)
+## Work in progress found on 2026-11-15 (main checkout, uncommitted)
+
+All of this is now committed except dnsmasq (see Next steps §2).
 
 Theme: **move local DNS from `*.local` to `*.lab` and make it work for other LAN devices**, plus expose Plex publicly.
 
@@ -34,23 +36,26 @@ Theme: **move local DNS from `*.local` to `*.lab` and make it work for other LAN
 ### 1. Reconcile git
 - [x] Rebase local commits onto `origin/main`, squash the fixup, push.
 
-### 2. Land the `.lab` / dnsmasq work as focused commits
-- [ ] `feat(dns): rename local domains .local -> .lab` (hosts + conf.d server_names). Also update README if it mentions `.local`.
-- [ ] `feat(nginx): listen on IPv6`
-- [ ] `feat(dns): dnsmasq for LAN resolution`. Decide where it lives (`dnsmasq/dnsmasq.conf` to match `nginx/` rather than a root-owned `opt/homebrew/etc/` mirror). Enable the `address=/.lab/<ip>` wildcard. Add an `init.sh dnsmasq()` (brew install, symlink config, `sudo brew services start dnsmasq` since it needs port 53). Document pointing the router or Tailscale split-DNS at it.
-- [ ] `feat(plex): launch via wrapper script` + `feat(plex): public hostname`
-- [ ] Restore `init.sh main` before committing.
+### 2. Land the WIP as focused commits
+- [x] `.local` → `.lab` rename, IPv6 listen, Plex wrapper script, public Plex hostname (2026-11-15). `init.sh main` restored, with `plex` added.
+- [ ] **dnsmasq — blocked on decisions.** The WIP config is still uncommitted in the main checkout at `opt/homebrew/etc/dnsmasq.conf` (root-owned dir). Findings:
+  - The LAN IP drifts: the WIP config uses `192.168.1.10`, `en0` is currently `192.168.1.161`, and a hand-added `/etc/hosts` line uses `.180`. Pick a DHCP reservation or use the Tailscale IP (`100.68.47.46`, stable).
+  - The live `/opt/homebrew/etc/dnsmasq.conf` is a different March config (`port=5354`, `tv.alexyoung.io` → Tailscale IP), running as a *user* brew service. Its log shows `Permission denied` binding :53 as non-root, which is why it uses 5354. Router DHCP DNS and Tailscale split DNS both need :53, so it has to run as root (`sudo brew services start dnsmasq`).
+  - dnsmasq serves `/etc/hosts` by default, which would hand LAN clients `127.0.0.1` for `*.lab` → needs `no-hosts`.
+  - To do: move the config to `dnsmasq/dnsmasq.conf`, use the wildcard `address=/lab/<ip>`, add `init.sh dnsmasq()` (symlink + root service), and document the router / Tailscale split-DNS setup.
 
 ### 3. Bugs and gaps found during review
-- [ ] `init.sh seerr`: `sudo mv --force` fails on macOS (BSD `mv` has no long flags) → use `-f`. `source ~/.zshrc` inside a bash script is ineffective/odd.
-- [ ] `init.sh dns`: appends to `/etc/hosts` on every run. After the rename, re-running it leaves the stale `.local` block alongside the new `.lab` one. Make it replace the `# Begin homelab`…`# End homelab` block instead.
-- [ ] `init.sh nginx`: `ln -s` without `-f`/existence check isn't idempotent; the cert is regenerated on every run.
-- [ ] `hosts` has no `flaresolverr` entry even though there's an nginx vhost for it.
-- [ ] `com.homelab.nginx.plist`: nginx daemonizes by default, so launchd loses track of it. Add `-g 'daemon off;'` to `ProgramArguments` (or `daemon off;` in `nginx.conf`) so `kickstart -k` / `bootout` actually control it.
-- [ ] Inconsistent logging: radarr, plex, qbittorrent plists have no `StandardOutPath`/`StandardErrorPath`.
-- [ ] `stop.sh` discovers jobs via `launchctl list | awk`, while `start.sh` reads plist Labels. Align them (iterate plists in both).
-- [ ] No `init.sh` functions for Plex/qBittorrent install, or for installing Docker/FlareSolverr.
+- [x] `init.sh seerr`: BSD `mv --force`, non-empty `/tmp/seerr` / `/opt/seerr`, `source ~/.zshrc` from bash, `which node` vs keg-only node@22.
+- [x] `init.sh dns`: now replaces the `# Begin homelab`…`# End homelab` block instead of appending. Re-run it once to clean the existing `/etc/hosts`.
+- [x] `init.sh nginx`: `ln -sfn`; the cert is only generated if missing.
+- [x] `init.sh` runs from its own directory and creates `/usr/local/var/log`.
+- [x] `hosts`: added `flaresolverr.lab`.
+- [x] `com.homelab.nginx.plist`: `-g 'daemon off;'`. This was the cause of the `bind() ... Address already in use` loop in `homelab.nginx.error.log`. **Before the first start with the new plist, stop any stray daemonized nginx (`nginx -s stop`).**
+- [x] Log paths added for the radarr, plex and qbittorrent plists.
+- [x] `stop.sh` iterates plist Labels like `start.sh`; both `cd` to their own directory; shellcheck clean.
+- [ ] No `init.sh` functions for Plex/qBittorrent install (`brew install --cask plex-media-server qbittorrent`?), or for installing Docker/FlareSolverr.
 - [ ] The 443 blocks use a self-signed cert only to 301 to HTTP, and public hosts are HTTP-only at nginx. Confirm TLS terminates upstream (Cloudflare? Tailscale Funnel?) and document it.
+- [ ] Not verified on the host: none of the changes have been run (`init.sh`, `start.sh`). As of 2026-11-15, no `com.homelab.*` jobs are loaded; only the FlareSolverr container and the old user-level dnsmasq are running.
 
 ### 4. Nice to have
 - [ ] README: setup steps (`init.sh` → `start.sh`), port table, how public DNS reaches the box.

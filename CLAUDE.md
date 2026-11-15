@@ -19,12 +19,14 @@ Flow: Seerr → Radarr/Sonarr ↔ Prowlarr → qBittorrent → filesystem ← Pl
 
 ## Layout
 
-- `init.sh` — one-time machine setup. One bash function per service (`radarr`, `sonarr`, `prowlarr`, `seerr`, `nginx`, `dns`), called from `main`. Downloads arm64 builds to `/tmp`, moves to `/Applications`, ad-hoc codesigns and strips quarantine. Seerr is built from source into `/opt/seerr`. Plex and qBittorrent are installed manually (no init function yet).
-- `start.sh` / `stop.sh` — start/stop everything. `start.sh` iterates `launchctl/*.plist`, reads each `Label` via `plutil`, and `kickstart -k`s if loaded or `bootstrap`s if not (idempotent). `stop.sh` `bootout`s every loaded `com.homelab.*` job. Both also start/stop the FlareSolverr container. Run from the repo root (paths are relative).
+- `init.sh` — machine setup, meant to be safe to re-run. One bash function per service (`logs`, `plex`, `radarr`, `sonarr`, `prowlarr`, `seerr`, `nginx`, `dns`), called from `main`. Downloads arm64 builds to `/tmp`, moves to `/Applications`, ad-hoc codesigns and strips quarantine. Seerr is built from source into `/opt/seerr`. Plex and qBittorrent are installed manually (no init function yet).
+- `start.sh` / `stop.sh` — start/stop everything. `start.sh` iterates `launchctl/*.plist`, reads each `Label` via `plutil`, and `kickstart -k`s if loaded or `bootstrap`s if not (idempotent). `stop.sh` `bootout`s every loaded `com.homelab.*` job. Both also start/stop the FlareSolverr container. All three scripts `cd` to their own directory first.
+- `plex.sh` — wrapper that `exec`s Plex Media Server; symlinked to `/usr/local/bin/plex.sh` and used by the Plex plist.
 - `launchctl/com.homelab.<service>.plist` — LaunchAgents in the `gui/$(id -u)` domain. Logs (where configured) go to `/usr/local/var/log/homelab.<service>[.error].log`.
 - `nginx/nginx.conf` — minimal; includes `/usr/local/etc/nginx/conf.d/*.conf`. `init.sh` symlinks `nginx/` → `/usr/local/etc/nginx` and `nginx.conf` → `/opt/homebrew/etc/nginx/nginx.conf`, so edits in the repo are live after an nginx reload.
 - `nginx/conf.d/<service>.conf` — one file per service: a `443 ssl` block (self-signed cert from `nginx/certs/`, gitignored) that 301s to HTTP, and a `:80` block that `proxy_pass`es to `localhost:<port>`. Public hostnames get an extra `:80` server block in the same file.
-- `hosts` — block appended to `/etc/hosts` by `init.sh dns`, delimited by `# Begin homelab` / `# End homelab`.
+- `hosts` — `*.lab` names → `127.0.0.1`. `init.sh dns` replaces the `# Begin homelab` / `# End homelab` block in `/etc/hosts` with it. (`.lab`, not `.local`, which is mDNS on macOS.)
+- nginx runs in the foreground (`-g 'daemon off;'` in its plist) so launchd can supervise it. Don't remove that.
 
 ## Conventions
 
