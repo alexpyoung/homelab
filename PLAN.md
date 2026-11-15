@@ -37,32 +37,44 @@ Theme: **move local DNS from `*.local` to `*.lab` and make it work for other LAN
 - [x] Rebase local commits onto `origin/main`, squash the fixup, push.
 
 ### 2. Land the WIP as focused commits
-- [x] `.local` → `.lab` rename, IPv6 listen, Plex wrapper script, public Plex hostname (2026-11-15). `init.sh main` restored, with `plex` added.
-- [ ] **dnsmasq — blocked on decisions.** The WIP config is still uncommitted in the main checkout at `opt/homebrew/etc/dnsmasq.conf` (root-owned dir). Findings:
-  - The LAN IP drifts: the WIP config uses `192.168.1.10`, `en0` is currently `192.168.1.161`, and a hand-added `/etc/hosts` line uses `.180`. Pick a DHCP reservation or use the Tailscale IP (`100.68.47.46`, stable).
-  - The live `/opt/homebrew/etc/dnsmasq.conf` is a different March config (`port=5354`, `tv.alexyoung.io` → Tailscale IP), running as a *user* brew service. Its log shows `Permission denied` binding :53 as non-root, which is why it uses 5354. Router DHCP DNS and Tailscale split DNS both need :53, so it has to run as root (`sudo brew services start dnsmasq`).
-  - dnsmasq serves `/etc/hosts` by default, which would hand LAN clients `127.0.0.1` for `*.lab` → needs `no-hosts`.
-  - To do: move the config to `dnsmasq/dnsmasq.conf`, use the wildcard `address=/lab/<ip>`, add `init.sh dnsmasq()` (symlink + root service), and document the router / Tailscale split-DNS setup.
+- [x] `.local` → `.lab` rename, IPv6 listen, Plex wrapper script, public Plex hostname.
+- [x] dnsmasq **retired** (2026-11-15): brew service stopped and uninstalled. Superseded by public DNS → Tailscale IP (§3).
 
-### 3. Bugs and gaps found during review
-- [x] `init.sh seerr`: BSD `mv --force`, non-empty `/tmp/seerr` / `/opt/seerr`, `source ~/.zshrc` from bash, `which node` vs keg-only node@22.
-- [x] `init.sh dns`: now replaces the `# Begin homelab`…`# End homelab` block instead of appending. Re-run it once to clean the existing `/etc/hosts`.
-- [x] `init.sh nginx`: `ln -sfn`; the cert is only generated if missing.
-- [x] `init.sh` runs from its own directory and creates `/usr/local/var/log`.
-- [x] `hosts`: added `flaresolverr.lab`.
-- [x] `com.homelab.nginx.plist`: `-g 'daemon off;'`. This was the cause of the `bind() ... Address already in use` loop in `homelab.nginx.error.log`. **Before the first start with the new plist, stop any stray daemonized nginx (`nginx -s stop`).**
-- [x] Log paths added for the radarr, plex and qbittorrent plists.
-- [x] `stop.sh` iterates plist Labels like `start.sh`; both `cd` to their own directory; shellcheck clean.
-- [ ] No `init.sh` functions for Plex/qBittorrent install (`brew install --cask plex-media-server qbittorrent`?), or for installing Docker/FlareSolverr.
-- [ ] The 443 blocks use a self-signed cert only to 301 to HTTP, and public hosts are HTTP-only at nginx. Confirm TLS terminates upstream (Cloudflare? Tailscale Funnel?) and document it.
-- [ ] Not verified on the host: none of the changes have been run (`init.sh`, `start.sh`). As of 2026-11-15, no `com.homelab.*` jobs are loaded; only the FlareSolverr container and the old user-level dnsmasq are running.
+### 3. Access model (2026-11-15)
+Goal: easy, resilient access to every service from the host and the tailnet; limited public access later.
+- [x] Names: `<service>.lab.alexyoung.io`, plus `lab.alexyoung.io` → Homepage. Subdomains, not paths: Plex and Seerr don't support a base path (Seerr's docs: "Base URLs cannot be configured").
+- [x] Dropped `.lab`, the `hosts` file and `/etc/hosts` management, and the self-signed TLS redirect blocks.
+- [x] Homepage v2.8.0 (Docker, compose) with widgets for Plex, Seerr, Radarr, Sonarr, Prowlarr and qBittorrent. FlareSolverr moved into the same `compose.yaml`, pinned to v3.5.2.
+- [ ] **DNS records (manual, at Namecheap):** `lab` A `100.68.47.46` and `*.lab` A `100.68.47.46`. Use A records, not a CNAME to `*.ts.net`; the CNAME broke when the machine was renamed from `alexs-macbook-pro` to `alexs-homelab`.
+- [ ] Fill `.env` from `.env.example`.
+- [ ] Host cleanup (manual, needs sudo): remove the `# Begin homelab`…`# End homelab` block from `/etc/hosts`; delete the root-owned `opt/` dir and `nginx/certs/` in the main checkout.
+- [ ] First start with the new setup: `nginx -s stop` (to clear any daemonized nginx), `docker rm -f flaresolverr` (to clear the pre-compose container), then `./init.sh` and `./start.sh`.
+- [ ] **Deferred: public access.** `tv.alexyoung.io` / `watch.alexyoung.io` still CNAME to the stale `alexs-macbook-pro` name, so they're broken. Until then, either repoint them as A → `100.68.47.46` (tailnet-only) or remove them. Option to evaluate later: Cloudflare Tunnel for Seerr (custom domain, optional Cloudflare Access login), and Plex's built-in Remote Access for Plex (Cloudflare's terms forbid video streaming through the tunnel).
 
-### 4. Nice to have
-- [ ] README: setup steps (`init.sh` → `start.sh`), port table, how public DNS reaches the box.
-- [ ] `shellcheck` all scripts; `plutil -lint` plists; `nginx -t` as a pre-commit check.
-- [ ] Templating for conf.d (they are 95% identical).
+### 4. TLS — evaluation (2026-11-15)
+**Constraint:** the names resolve to a Tailscale CGNAT IP, so Let's Encrypt can't reach the server. The HTTP-01 and TLS-ALPN-01 challenges are out; **DNS-01 is the only option**, which needs API access to the DNS zone. DNS-01 also allows a wildcard cert (`*.lab.alexyoung.io` + `lab.alexyoung.io`): one cert for every service, with no per-service changes when services are added.
+
+| Option | Verdict |
+|---|---|
+| **Move DNS to Cloudflare (free; Namecheap stays the registrar) + `lego` DNS-01** | **Recommended.** Cloudflare imports existing records, and an API token can be scoped to DNS edits on one zone. `lego` is a single Go binary (`brew install lego`) with first-class Cloudflare support. Renewal is `lego renew` in a daily launchd job that reloads nginx after renewing. The same zone also sets up Cloudflare Tunnel for public access later. |
+| Namecheap API + lego/acme.sh | Fragile. Namecheap's API needs account eligibility (a balance/spend/domain-count threshold) and a **whitelisted static source IP**, which a home connection doesn't have. |
+| `_acme-challenge` CNAME delegation to acme-dns / deSEC | Works and keeps Namecheap, but adds another service and account to keep alive. More moving parts than moving DNS. |
+| certbot + `certbot-dns-cloudflare` | Works, but on macOS the plugin means pip-installing into Homebrew's certbot environment, which is brittle across upgrades. lego covers the same ground with one binary. |
+| Caddy instead of nginx | Built-in automatic HTTPS, but DNS-01 needs a custom build with a Cloudflare module (not the stock brew formula), and it would replace a working nginx setup. Not worth it now. |
+| Tailscale certs (`tailscale cert` / `serve`) | Only issues certs for `*.ts.net` names, not `lab.alexyoung.io`. |
+| Manual DNS-01 | Not resilient: Let's Encrypt lifetimes are shrinking (90 → 45 days), so this would be a recurring chore. |
+
+**Proposed implementation (after the DNS move):**
+- [ ] Cloudflare: add the zone, verify the imported records, switch nameservers at Namecheap. Keep `lab` / `*.lab` **DNS-only (grey cloud)**: proxied records can't reach a `100.x` IP.
+- [ ] API token scoped to `Zone:DNS:Edit` on `alexyoung.io`, stored outside the repo (e.g. `~/.config/homelab/cloudflare.env`, mode 600).
+- [ ] `init.sh tls()`: `brew install lego`, then the first issue for `lab.alexyoung.io` + `*.lab.alexyoung.io` into a cert dir outside the repo.
+- [ ] `launchctl/com.homelab.lego-renew.plist`: daily `StartCalendarInterval` running `lego renew --days 30 --renew-hook "nginx -s reload"`.
+- [ ] nginx: one shared `ssl` snippet included by every vhost; `listen 443 ssl`; `:80` → 301 to https; switch Homepage `href`s to https.
+
+### 5. Remaining gaps
+- [ ] No `init.sh` functions for Plex/qBittorrent install (`brew install --cask plex-media-server qbittorrent`?), or for Docker Desktop.
+- [ ] Not verified on the host: `init.sh` and `start.sh` haven't been run since these changes. As of 2026-11-15, no `com.homelab.*` jobs are loaded.
 
 ## Open questions
-- How does public traffic reach the Mac (port-forward, Cloudflare Tunnel, Tailscale Funnel)? The README says "CNAME → homelab" but doesn't say what's behind it.
-- Is the second public Seerr hostname meant to be permanent (shared with someone else)?
+- Is `tv.vasvikejriwal.com` meant to stay? It probably has the same stale CNAME.
 - What prompted the Plex wrapper script — Full Disk Access/TCC, or the path with spaces?
