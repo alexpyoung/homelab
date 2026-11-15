@@ -12,5 +12,9 @@
     <true/>
     <key>ProcessType</key>
     <string>Interactive</string>
+    <key>StandardOutPath</key>
+    <string>/usr/local/var/log/homelab.plex.log</string>
+    <key>StandardErrorPath</key>
+    <string>/usr/local/var/log/homelab.plex.error.log</string>
 </dict>
 </plist>

@@ -10,5 +10,9 @@
     </array>
     <key>RunAtLoad</key>
     <true/>
+    <key>StandardOutPath</key>
+    <string>/usr/local/var/log/homelab.radarr.log</string>
+    <key>StandardErrorPath</key>
+    <string>/usr/local/var/log/homelab.radarr.error.log</string>
 </dict>
 </plist>
