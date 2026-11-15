@@ -1,0 +1,49 @@
+---
+# https://gethomepage.dev/configs/services/
+# Widgets reach the host via host.docker.internal (Docker Desktop).
+- Media:
+    - Plex:
+        icon: plex.png
+        href: http://plex.lab.alexyoung.io/web
+        widget:
+          type: plex
+          url: http://host.docker.internal:32400
+          key: "{{HOMEPAGE_VAR_PLEX_TOKEN}}"
+    - Seerr:
+        icon: seerr.png
+        href: http://seerr.lab.alexyoung.io
+        widget:
+          type: seerr
+          url: http://host.docker.internal:5055
+          key: "{{HOMEPAGE_VAR_SEERR_KEY}}"
+
+- Automation:
+    - Radarr:
+        icon: radarr.png
+        href: http://radarr.lab.alexyoung.io
+        widget:
+          type: radarr
+          url: http://host.docker.internal:7878
+          key: "{{HOMEPAGE_VAR_RADARR_KEY}}"
+    - Sonarr:
+        icon: sonarr.png
+        href: http://sonarr.lab.alexyoung.io
+        widget:
+          type: sonarr
+          url: http://host.docker.internal:8989
+          key: "{{HOMEPAGE_VAR_SONARR_KEY}}"
+    - Prowlarr:
+        icon: prowlarr.png
+        href: http://prowlarr.lab.alexyoung.io
+        widget:
+          type: prowlarr
+          url: http://host.docker.internal:9696
+          key: "{{HOMEPAGE_VAR_PROWLARR_KEY}}"
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: http://qbittorrent.lab.alexyoung.io
+        widget:
+          type: qbittorrent
+          url: http://host.docker.internal:8080
+          username: "{{HOMEPAGE_VAR_QBITTORRENT_USERNAME}}"
+          password: "{{HOMEPAGE_VAR_QBITTORRENT_PASSWORD}}"
