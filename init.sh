@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+plex() {
+  sudo ln -sf "$PWD/plex.sh" /usr/local/bin/plex.sh
+}
+
 radarr() {
   # https://radarr.video/#downloads-macos
   mkdir -p /tmp/radarr
@@ -63,6 +67,7 @@ dns() {
 }
 
 main() {
+  plex
   radarr
   sonarr
   prowlarr
