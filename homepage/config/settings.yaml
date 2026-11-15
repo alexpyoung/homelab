@@ -1,0 +1,11 @@
+---
+# https://gethomepage.dev/configs/settings/
+title: homelab
+headerStyle: clean
+layout:
+  Media:
+    style: row
+    columns: 2
+  Automation:
+    style: row
+    columns: 4

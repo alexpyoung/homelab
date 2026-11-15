@@ -1,0 +1,6 @@
+---
+# https://gethomepage.dev/configs/info-widgets/
+- datetime:
+    format:
+      dateStyle: medium
+      timeStyle: short
