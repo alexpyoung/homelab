@@ -42,31 +42,50 @@ prowlarr() {
 
 seerr() {
   # https://docs.seerr.dev/getting-started/buildfromsource
-  which pnpm || (curl -fsSL https://get.pnpm.io/install.sh | sh - && source ~/.zshrc)
-  which node || HOMEBREW_NO_AUTO_UPDATE=1 brew install node@22
-  mkdir -p /tmp/seerr
+  local -r node_bin=/opt/homebrew/opt/node@22/bin
+  [[ -x "$node_bin/node" ]] || HOMEBREW_NO_AUTO_UPDATE=1 brew install node@22
+  export PATH="$node_bin:$PATH"
+  if ! command -v pnpm >/dev/null; then
+    curl -fsSL https://get.pnpm.io/install.sh | sh -
+    export PNPM_HOME="$HOME/Library/pnpm"
+    export PATH="$PNPM_HOME:$PATH"
+  fi
+  rm -rf /tmp/seerr
+  git clone --branch main https://github.com/seerr-team/seerr.git /tmp/seerr
   pushd /tmp/seerr || return
-  git clone https://github.com/seerr-team/seerr.git .
-  git checkout main
   CYPRESS_INSTALL_BINARY=0 pnpm install --frozen-lockfile
   pnpm build
   popd || return
-  sudo mv --force /tmp/seerr /opt
+  sudo rm -rf /opt/seerr
+  sudo mv /tmp/seerr /opt/seerr
 }
 
 nginx() {
-  which nginx || HOMEBREW_NO_AUTO_UPDATE=1 brew install nginx
+  command -v nginx >/dev/null || HOMEBREW_NO_AUTO_UPDATE=1 brew install nginx
   mkdir -p ./nginx/certs
-  openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./nginx/certs/local.key -out ./nginx/certs/local.crt -subj "/CN=localhost"
-  sudo ln -s "$PWD/nginx" /usr/local/etc/nginx
+  if [[ ! -f ./nginx/certs/local.crt ]]; then
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./nginx/certs/local.key -out ./nginx/certs/local.crt -subj "/CN=localhost"
+  fi
+  sudo mkdir -p /usr/local/etc
+  sudo ln -sfn "$PWD/nginx" /usr/local/etc/nginx
   sudo ln -sf "$PWD/nginx/nginx.conf" /opt/homebrew/etc/nginx/nginx.conf
 }
 
+logs() {
+  sudo mkdir -p /usr/local/var/log
+  sudo chown "$USER" /usr/local/var/log
+}
+
 dns() {
-  cat ./hosts | sudo tee -a /etc/hosts
+  # Replace the homelab block in /etc/hosts rather than appending a duplicate
+  sudo sed -i '' '/^# Begin homelab$/,/^# End homelab$/d' /etc/hosts
+  sudo tee -a /etc/hosts < ./hosts >/dev/null
 }
 
 main() {
+  cd "$(dirname "$0")" || exit 1
+  logs
+
   plex
   radarr
   sonarr
