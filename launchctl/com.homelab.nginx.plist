@@ -7,6 +7,8 @@
     <key>ProgramArguments</key>
     <array>
         <string>/opt/homebrew/bin/nginx</string>
+        <string>-g</string>
+        <string>daemon off;</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
