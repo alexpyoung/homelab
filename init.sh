@@ -42,6 +42,8 @@ prowlarr() {
 
 seerr() {
   # https://docs.seerr.dev/getting-started/buildfromsource
+  # /opt/seerr/config holds Seerr's settings and database: never replace an existing install.
+  [[ -d /opt/seerr ]] && { echo "seerr already installed, skipping"; return; }
   local -r node_bin=/opt/homebrew/opt/node@22/bin
   [[ -x "$node_bin/node" ]] || HOMEBREW_NO_AUTO_UPDATE=1 brew install node@22
   export PATH="$node_bin:$PATH"
@@ -56,7 +58,6 @@ seerr() {
   CYPRESS_INSTALL_BINARY=0 pnpm install --frozen-lockfile
   pnpm build
   popd || return
-  sudo rm -rf /opt/seerr
   sudo mv /tmp/seerr /opt/seerr
 }
 
