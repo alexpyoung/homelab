@@ -6,6 +6,8 @@ plex() {
 
 radarr() {
   # https://radarr.video/#downloads-macos
+  # Installed apps self-update; re-running mv would nest a second bundle inside.
+  [[ -d /Applications/Radarr.app ]] && { echo "radarr already installed, skipping"; return; }
   mkdir -p /tmp/radarr
   curl -L -o /tmp/radarr/latest-arm64.zip "https://radarr.servarr.com/v1/update/master/updatefile?os=osx&runtime=netcore&arch=arm64&installer=true"
   unzip /tmp/radarr/latest-arm64.zip -d /tmp/radarr
@@ -18,6 +20,8 @@ radarr() {
 
 sonarr() {
   # https://sonarr.tv/#downloads-macos
+  # Installed apps self-update; re-running mv would nest a second bundle inside.
+  [[ -d /Applications/Sonarr.app ]] && { echo "sonarr already installed, skipping"; return; }
   mkdir -p /tmp/sonarr
   curl -L -o /tmp/sonarr/latest-arm64.zip "https://services.sonarr.tv/v1/download/main/latest?version=4&os=macos&arch=arm64&installer=true"
   unzip /tmp/sonarr/latest-arm64.zip -d /tmp/sonarr
@@ -30,6 +34,8 @@ sonarr() {
 
 prowlarr() {
   # https://prowlarr.com/#downloads-v3-macos
+  # Installed apps self-update; re-running mv would nest a second bundle inside.
+  [[ -d /Applications/Prowlarr.app ]] && { echo "prowlarr already installed, skipping"; return; }
   mkdir -p /tmp/prowlarr
   curl -L -o /tmp/prowlarr/latest-arm64.zip "https://prowlarr.servarr.com/v1/update/master/updatefile?os=osx&runtime=netcore&arch=arm64&installer=true"
   unzip /tmp/prowlarr/latest-arm64.zip -d /tmp/prowlarr
