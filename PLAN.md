@@ -45,10 +45,10 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 - [x] Names: `<service>.lab.alexyoung.io`, plus `lab.alexyoung.io` → Homepage. Subdomains, not paths: Plex and Seerr don't support a base path (Seerr's docs: "Base URLs cannot be configured").
 - [x] Dropped `.lab`, the `hosts` file and `/etc/hosts` management, and the self-signed TLS redirect blocks.
 - [x] Homepage v2.8.0 (Docker, compose) with widgets for Plex, Seerr, Radarr, Sonarr, Prowlarr and qBittorrent. FlareSolverr moved into the same `compose.yaml`, pinned to v3.5.2.
-- [ ] **DNS records (manual, at Namecheap):** `lab` A `100.68.47.46` and `*.lab` A `100.68.47.46`. Use A records, not a CNAME to `*.ts.net`; the CNAME broke when the machine was renamed from `alexs-macbook-pro` to `alexs-homelab`.
-- [ ] Fill `.env` from `.env.example`.
-- [ ] Host cleanup (manual, needs sudo): remove the `# Begin homelab`…`# End homelab` block from `/etc/hosts`; delete the root-owned `opt/` dir and `nginx/certs/` in the main checkout.
-- [ ] First start with the new setup: `nginx -s stop` (to clear any daemonized nginx), `docker rm -f flaresolverr` (to clear the pre-compose container), then `./init.sh` and `./start.sh`.
+- [x] **DNS records (at Namecheap):** `lab` A `100.68.47.46` and `*.lab` A `100.68.47.46`. Use A records, not a CNAME to `*.ts.net`; the CNAME broke when the machine was renamed from `alexs-macbook-pro` to `alexs-homelab`.
+- [x] Fill `.env` from `.env.example`. qBittorrent has no Web UI login, so its two vars stay empty.
+- [x] Host cleanup: `/etc/hosts` homelab block, the root-owned `opt/` dir and `nginx/certs/` removed from the main checkout.
+- [x] First start (2026-11-15): nginx reloaded on the new vhosts, pre-compose `flaresolverr` container removed, `docker compose up -d` from the main checkout. Every `*.lab.alexyoung.io` name answers, and all Homepage widgets show live data.
 - [ ] **Deferred: public access.** `tv.alexyoung.io` / `watch.alexyoung.io` still CNAME to the stale `alexs-macbook-pro` name, so they're broken. Until then, either repoint them as A → `100.68.47.46` (tailnet-only) or remove them. Option to evaluate later: Cloudflare Tunnel for Seerr (custom domain, optional Cloudflare Access login), and Plex's built-in Remote Access for Plex (Cloudflare's terms forbid video streaming through the tunnel).
 
 ### 4. TLS — evaluation (2026-11-15)
@@ -73,7 +73,8 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 
 ### 5. Remaining gaps
 - [ ] No `init.sh` functions for Plex/qBittorrent install (`brew install --cask plex-media-server qbittorrent`?), or for Docker Desktop.
-- [ ] Not verified on the host: `init.sh` and `start.sh` haven't been run since these changes. As of 2026-11-15, no `com.homelab.*` jobs are loaded.
+- [ ] `init.sh` re-run safety: an earlier version wiped `/opt/seerr/config` (restored from a local APFS snapshot on 2026-11-15). It now skips existing installs, but stray nested bundles (`/Applications/{Radarr,Sonarr,Prowlarr}.app/<App>.app`) from old runs are still on disk.
+- [ ] nginx has no `default_server`: unknown hosts fall through to the first vhost (FlareSolverr). Add a catch-all returning 444.
 
 ## Open questions
 - Is `tv.vasvikejriwal.com` meant to stay? It probably has the same stale CNAME.
