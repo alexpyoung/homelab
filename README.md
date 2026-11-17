@@ -1,10 +1,11 @@
 # homelab
-Dashboard: http://lab.alexyoung.io (tailnet only). Each service is at `http://<service>.lab.alexyoung.io`.
+Dashboard: https://lab.alexyoung.io (tailnet only). Each service is at `https://<service>.lab.alexyoung.io`.
 
 ## Setup
 ```
 $ ./init.sh   # install apps, link configs (uses sudo)
 $ cp .env.example .env   # fill in Homepage widget keys
+$ $EDITOR ~/.config/homelab/cloudflare.env   # CF_DNS_API_TOKEN=... (Zone:DNS:Edit + Zone:Read on alexyoung.io), chmod 600
 $ ./start.sh
 ```
 ## Helpful Commands
