@@ -1,2 +1,6 @@
 .env
+# Written by Homepage on start when missing
 homepage/config/logs/
+homepage/config/custom.css
+homepage/config/custom.js
+homepage/config/proxmox.yaml
