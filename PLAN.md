@@ -71,7 +71,8 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 - [x] nginx: shared `ssl_certificate` in `nginx.conf`, every lab vhost on `listen 443 ssl`, `:80` → 301 to https, `X-Forwarded-Proto` passed; Homepage `href`s on https.
 
 ### 5. Remaining gaps
-- [ ] No `init.sh` functions for Plex/qBittorrent install, or for Docker Desktop. qBittorrent can't use Homebrew (cask disabled 2026-09-01 for failing Gatekeeper); it's installed by hand from the official dmg (5.2.3 as of 2026-11-16) and `init.sh` only keeps it dockless (`LSUIElement`).
+- [x] 2026-11-17: `init.sh` installs Plex, qBittorrent (pinned dmg; the cask was disabled 2026-09-01 for failing Gatekeeper), Docker Desktop and Tailscale (via `Brewfile`). `state.sh` backs up and restores app state; the new-machine runbook is in `README.md`. The restore path has only been tested against scratch directories, not on a clean Mac.
+- [ ] launchd jobs are bootstrapped from the repo's `launchctl/` directory, not `~/Library/LaunchAgents`, so they don't come back after a reboot until `./start.sh` is run.
 - [x] `init.sh` re-run safety: an earlier version wiped `/opt/seerr/config` (restored from a local APFS snapshot on 2026-11-15). It now skips existing installs, and the stray nested bundles from old runs were deleted 2026-11-16 (apps re-signed ad hoc).
 - [x] nginx has no `default_server`: unknown hosts fall through to the first vhost (FlareSolverr). Add a catch-all returning 444. Done 2026-11-16 (`return 444` + `ssl_reject_handshake`).
 - [x] `homepage.conf` proxies to `localhost:3000`, which nginx tries as `[::1]` first; Homepage only binds `127.0.0.1`, so every request logs a refused connection before falling back. Use `127.0.0.1:3000`. Done 2026-11-16.

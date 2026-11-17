@@ -8,6 +8,25 @@ $ cp .env.example .env   # fill in Homepage widget keys
 $ $EDITOR ~/.config/homelab/cloudflare.env   # CF_DNS_API_TOKEN=... (Zone:DNS:Edit + Zone:Read on alexyoung.io), chmod 600
 $ ./start.sh
 ```
+## Moving to a new machine
+Needs an Apple Silicon Mac. Everything is in this repo except app state (databases, API keys, tokens) and media, which sits on the `Lucy` drive.
+
+On the old machine, keep the archive off the Mac and private (it holds API keys and tokens):
+```
+$ ./state.sh backup /Volumes/Lucy/Backups/homelab
+```
+Run it from the main checkout so it picks up `.env`. Run it again before every move.
+
+On the new machine:
+1. Install Homebrew and the Xcode command line tools, clone this repo, install the Tailscale app (installed by `init.sh`) and sign in.
+2. `./init.sh`: installs Homebrew packages, the apps and Seerr. Open Docker Desktop once so it finishes setup.
+3. `./state.sh restore <archive>` with everything stopped. This puts back each app's settings (bind addresses, auth, libraries), Seerr's database, `.env`, the Plex preferences and `~/.config/homelab/cloudflare.env`.
+4. Plug in `Lucy` (same volume name, or the library paths break) and approve any macOS prompts for access to it.
+5. Point the `lab` and `*.lab` A records in Cloudflare at the new `tailscale ip -4`.
+6. `./start.sh`. lego issues the wildcard cert on first run.
+
+Stop the old machine first: the restored Plex keeps the same server identity, so two running copies conflict. Plex's Metadata and Media (artwork, thumbnails) aren't backed up (`PLEX_FULL=1` includes them); Plex re-downloads them, so the first library scan is slow.
+
 ## Helpful Commands
 ### Tail Logs
 ```
