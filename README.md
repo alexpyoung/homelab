@@ -54,12 +54,14 @@ $ launchctl kickstart -k gui/$(id -u)/com.homelab.seerr
 External: how a device reaches the homelab, and where the cert comes from.
 ```mermaid
 flowchart LR
-    Devices
     cf[Cloudflare DNS]
     le[Let's Encrypt]
-    subgraph homelab
-        lego
-        nginx{nginx}
+    subgraph tailnet
+        Devices
+        subgraph homelab
+            lego
+            nginx{nginx}
+        end
     end
     Devices -."1. DNS lookup returns the Tailscale IP".-> cf
     Devices --"2. https over the tailnet"--> nginx
@@ -70,18 +72,20 @@ flowchart LR
 Internal: what nginx fronts, and how the services talk to each other.
 ```mermaid
 flowchart LR
-    nginx{nginx}
-    subgraph docker
-        homepage
-        flaresolverr
+    subgraph tailnet
+        nginx{nginx}
+        subgraph docker
+            homepage
+            flaresolverr
+        end
+        plex
+        seerr
+        radarr
+        sonarr
+        prowlarr
+        qbittorrent
+        fs[(filesystem)]
     end
-    plex
-    seerr
-    radarr
-    sonarr
-    prowlarr
-    qbittorrent
-    fs[(filesystem)]
     nginx-->homepage
     nginx-->seerr
     nginx-->plex
