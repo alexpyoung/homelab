@@ -19,14 +19,14 @@ Personal media homelab running natively on a single Apple Silicon Mac. FlareSolv
 | Radarr       | Movies                        | launchd → `/Applications/Radarr.app`      | 7878  |
 | Sonarr       | TV                            | launchd → `/Applications/Sonarr.app`      | 8989  |
 | Prowlarr     | Indexer manager               | launchd → `/Applications/Prowlarr.app`    | 9696  |
-| qBittorrent  | Download client               | launchd → `/Applications/qBittorrent.app` | 8080  |
+| qBittorrent  | Download client (Web UI only) | launchd → `/Applications/qBittorrent.app` (agent app, no Dock icon) | 8080  |
 | FlareSolverr | Cloudflare challenge solver   | Docker (compose)                          | 8191  |
 
 Flow: Seerr → Radarr/Sonarr ↔ Prowlarr → qBittorrent → filesystem ← Plex. See the mermaid diagram in `README.md`. Access: every service is `<service>.lab.alexyoung.io`, plus `lab.alexyoung.io` for Homepage. Public DNS has `lab` and `*.lab` A records pointing at the homelab's Tailscale IP, so the names work on the host and anywhere on the tailnet, and nowhere else. Public internet access is deferred (see `PLAN.md`).
 
 ## Layout
 
-- `init.sh` — machine setup, meant to be safe to re-run. One bash function per service (`logs`, `plex`, `radarr`, `sonarr`, `prowlarr`, `seerr`, `nginx`), called from `main`. Downloads arm64 builds to `/tmp`, moves to `/Applications`, ad-hoc codesigns and strips quarantine. Seerr is built from source into `/opt/seerr`. Plex and qBittorrent are installed manually (no init function yet).
+- `init.sh` — machine setup, meant to be safe to re-run. One bash function per service (`logs`, `plex`, `radarr`, `sonarr`, `prowlarr`, `qbittorrent`, `seerr`, `nginx`), called from `main`. Downloads arm64 builds to `/tmp`, moves to `/Applications`, ad-hoc codesigns and strips quarantine. Seerr is built from source into `/opt/seerr`. Plex and qBittorrent are installed manually (Homebrew's qBittorrent cask is disabled; get the dmg from the official SourceForge `qbittorrent-mac` folder). `qbittorrent()` only sets `LSUIElement` and re-signs the app so it runs without a Dock icon; re-run `init.sh` after replacing the app.
 - `start.sh` / `stop.sh` — start/stop everything. `start.sh` iterates `launchctl/*.plist`, reads each `Label` via `plutil`, and `kickstart -k`s if loaded or `bootstrap`s if not (idempotent). `stop.sh` `bootout`s every loaded `com.homelab.*` job. Both also run `docker compose up -d` / `stop` for the containers. All three scripts `cd` to their own directory first.
 - `plex.sh` — wrapper that `exec`s Plex Media Server; symlinked to `/usr/local/bin/plex.sh` and used by the Plex plist.
 - `launchctl/com.homelab.<service>.plist` — LaunchAgents in the `gui/$(id -u)` domain. Logs (where configured) go to `/usr/local/var/log/homelab.<service>[.error].log`.

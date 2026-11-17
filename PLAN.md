@@ -72,7 +72,7 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 - [ ] nginx: one shared `ssl` snippet included by every vhost; `listen 443 ssl`; `:80` → 301 to https; switch Homepage `href`s to https.
 
 ### 5. Remaining gaps
-- [ ] No `init.sh` functions for Plex/qBittorrent install (`brew install --cask plex-media-server qbittorrent`?), or for Docker Desktop.
+- [ ] No `init.sh` functions for Plex/qBittorrent install, or for Docker Desktop. qBittorrent can't use Homebrew (cask disabled 2026-09-01 for failing Gatekeeper); it's installed by hand from the official dmg (5.2.3 as of 2026-11-16) and `init.sh` only keeps it dockless (`LSUIElement`).
 - [ ] `init.sh` re-run safety: an earlier version wiped `/opt/seerr/config` (restored from a local APFS snapshot on 2026-11-15). It now skips existing installs, but stray nested bundles (`/Applications/{Radarr,Sonarr,Prowlarr}.app/<App>.app`) from old runs are still on disk.
 - [ ] nginx has no `default_server`: unknown hosts fall through to the first vhost (FlareSolverr). Add a catch-all returning 444.
 
