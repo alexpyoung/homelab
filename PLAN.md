@@ -101,4 +101,4 @@ Researched, not started. Pick up from here.
 - Fix: block incoming connections per app in the macOS firewall, or bind each app to localhost where it supports that. Plex on the LAN is expected (local clients discover it).
 
 ## Open questions
-- What prompted the Plex wrapper script — Full Disk Access/TCC, or the path with spaces?
+- None. The Plex wrapper script (`plex.sh`) was removed 2026-11-17; the plist runs the app binary directly. If Plex loses access to `/Volumes/Lucy` after a reload, suspect TCC (external volume access) and restore the wrapper or grant Full Disk Access.

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 plex() {
-  sudo ln -sf "$PWD/plex.sh" /usr/local/bin/plex.sh
   # Self-updates relaunch Plex outside launchd (no restart on crash); update by hand instead.
   # Same as Settings > General > Server version updates: "Ask me".
   defaults write com.plexapp.plexmediaserver ButlerTaskUpdateServer askme

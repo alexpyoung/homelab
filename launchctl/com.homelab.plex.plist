@@ -6,7 +6,7 @@
     <string>com.homelab.plex</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/plex.sh</string>
+        <string>/Applications/Plex Media Server.app/Contents/MacOS/Plex Media Server</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
