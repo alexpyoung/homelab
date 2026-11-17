@@ -77,5 +77,26 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 - [x] `homepage.conf` proxies to `localhost:3000`, which nginx tries as `[::1]` first; Homepage only binds `127.0.0.1`, so every request logs a refused connection before falling back. Use `127.0.0.1:3000`. Done 2026-11-16.
 - [x] 2026-11-16: blank Plex Web page over https. nginx temp dirs were owned by `nobody` (from a root-run nginx in March), so large responses were truncated and failed the page's integrity checks. Removed the empty dirs; nginx recreated them as the user.
 
+### 6. Deferred options (2026-11-16)
+Researched, not started. Pick up from here.
+
+**Public Seerr**
+- **Recommended: Cloudflare Tunnel.** `cloudflared` as a launchd job dials out to Cloudflare; no open ports, home IP stays hidden, works behind CGNAT, free. Token stored outside the repo like the DNS token; public hostname → `http://localhost:5055` (skip nginx).
+- Hostname must be one level deep (`seerr.alexyoung.io`, `requests.alexyoung.io`): the free Universal SSL cert covers `*.alexyoung.io`, not `seerr.lab.alexyoung.io` (that needs Advanced Certificate Manager, ~$10/mo). `seerr.lab` keeps working on the tailnet unchanged.
+- Optional Cloudflare Access in front (email code / Google); Seerr already has its own Plex login.
+- Rejected: Tailscale Funnel (only `*.ts.net` names), router port forward (exposes home IP), VPS proxy (another machine).
+- Plex stays private; if ever needed, use Plex Remote Access (Cloudflare's terms forbid video streaming through a tunnel).
+
+**`*.lab.alexyoung.io` on home Wi-Fi (off the tailnet)**
+- The names resolve to the Tailscale IP, so they fail off-tailnet. Devices need `192.168.1.161` instead (reserve it via DHCP); nginx and the wildcard cert work unchanged.
+- **Recommended: router DNS override** for `lab.alexyoung.io` + `*.lab.alexyoung.io` → `192.168.1.161`, if the router supports wildcards.
+- Otherwise: a local DNS server (dnsmasq / AdGuard Home / Pi-hole; brings back what was retired and becomes a single point of failure for home DNS), or Tailscale for household members / node sharing for friends.
+- Rejected: separate public names like `*.home.alexyoung.io` → private IP (two names per service; some routers block private IPs in public DNS answers).
+- Devices with their own DNS (VPNs, iCloud Private Relay, browser DNS-over-HTTPS) ignore a router override. This Mac uses `10.2.0.1` (likely a VPN's DNS).
+
+**LAN exposure of app ports**
+- Every app except Homepage listens on all interfaces, so anyone on the Wi-Fi can reach `192.168.1.161:<port>` directly, skipping nginx (qBittorrent has no login). The macOS firewall is on, but its per-app rules are unverified: test from a phone on Wi-Fi with Tailscale off.
+- Fix: block incoming connections per app in the macOS firewall, or bind each app to localhost where it supports that. Plex on the LAN is expected (local clients discover it).
+
 ## Open questions
 - What prompted the Plex wrapper script — Full Disk Access/TCC, or the path with spaces?
