@@ -35,7 +35,7 @@ Flow: Seerr → Radarr/Sonarr ↔ Prowlarr → qBittorrent → filesystem ← Pl
 - `nginx/conf.d/<service>.conf` — one file per service: a `listen 443 ssl` server block for `<service>.lab.alexyoung.io` that `proxy_pass`es to `localhost:<port>` (the cert is inherited from `nginx.conf`). Public hostnames (`tv`, `watch`) get an extra `:80` server block in the same file.
 - `compose.yaml` — FlareSolverr and Homepage, with pinned image tags.
 - `homepage/config/*.yaml` — Homepage config. Widget secrets are `{{HOMEPAGE_VAR_*}}` placeholders filled from a gitignored `.env` (template: `.env.example`). Widgets reach host services via `host.docker.internal`.
-- nginx runs in the foreground (`-g 'daemon off;'` in its plist) so launchd can supervise it. Don't remove that.
+- nginx runs in the foreground (`-g 'daemon off;'` in its plist) so launchd can supervise it. Don't remove that. Never run nginx with `sudo`: root-run nginx recreates `/opt/homebrew/var/run/nginx/*_temp` owned by `nobody`, and the user-run nginx then truncates large proxied responses (blank Plex Web page). Fix: `rmdir` those empty dirs and reload.
 - TLS: `launchctl/com.homelab.lego.plist` runs `lego run` at load and daily; it proves control via Cloudflare DNS-01 (token in `~/.config/homelab/cloudflare.env`, outside the repo), renews only when due and reloads nginx. One wildcard cert covers every `*.lab` service.
 
 ## Conventions
