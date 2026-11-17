@@ -54,3 +54,8 @@ flowchart
         Device02--"*.lab.alexyoung.io"-->nginx
     end
 ```
+## Troubleshooting
+- **Blank Plex Web page / truncated downloads:** nginx can't write `/opt/homebrew/var/run/nginx/*_temp` (left owned by `nobody` after a root-run nginx). `rmdir` those empty dirs and `nginx -s reload`. Never run nginx with `sudo`.
+- **Plex app can't reach the server away from home:** Tailscale must be on; the app connects via `https://plex.lab.alexyoung.io:443` (Plex → Network → Custom server access URLs). Fully close and reopen the app after changing it.
+- **Plex iOS search only shows the library:** enable Movies & Shows under the account's Settings → Online Media Sources.
+- **Seerr "Sign in with Plex" spins forever on iPhone:** iOS pauses the original tab, so the pop-up never reaches plex.tv. Switch back to the first tab for a few seconds, allow pop-ups, or sign in with a Seerr password instead.
