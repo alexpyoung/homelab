@@ -1,6 +1,25 @@
 #!/usr/bin/env bash
 
+packages() {
+  command -v brew >/dev/null || { echo "Homebrew is required: https://brew.sh"; exit 1; }
+  HOMEBREW_NO_AUTO_UPDATE=1 brew bundle --file Brewfile
+}
+
 plex() {
+  # https://www.plex.tv/media-server-downloads/ (universal build; URL and checksum come from plex.tv's download API)
+  # Installed apps self-update by hand only; never replace an existing install.
+  if [[ ! -d "/Applications/Plex Media Server.app" ]]; then
+    local release url sha1
+    release=$(curl -fsSL https://plex.tv/api/downloads/5.json)
+    url=$(plutil -extract computer.MacOS.releases.0.url raw -o - - <<<"$release")
+    sha1=$(plutil -extract computer.MacOS.releases.0.checksum raw -o - - <<<"$release")
+    mkdir -p /tmp/plex
+    curl -fL -o /tmp/plex/plex.zip "$url"
+    [[ $(shasum -a 1 /tmp/plex/plex.zip | cut -d' ' -f1) == "$sha1" ]] || { echo "plex: checksum mismatch"; exit 1; }
+    unzip -q /tmp/plex/plex.zip -d /tmp/plex
+    mv "/tmp/plex/Plex Media Server.app" "/Applications/Plex Media Server.app"
+    rm -rf /tmp/plex
+  fi
   # Self-updates relaunch Plex outside launchd (no restart on crash); update by hand instead.
   # Same as Settings > General > Server version updates: "Ask me".
   defaults write com.plexapp.plexmediaserver ButlerTaskUpdateServer askme
@@ -49,10 +68,20 @@ prowlarr() {
 }
 
 qbittorrent() {
-  # Installed manually. Run it as an agent app (no Dock icon or menu bar); use the Web UI on :8080.
-  # Replacing the app drops the flag, so this re-applies it.
+  # Not from Homebrew (its cask is disabled); the dmg is from the official SourceForge qbittorrent-mac folder.
+  # Run it as an agent app (no Dock icon or menu bar); use the Web UI on :8080.
+  # Replacing the app drops the LSUIElement flag, so this re-applies it: bump `version`, delete the app, re-run.
+  local -r version=5.2.3
   local -r app=/Applications/qBittorrent.app
-  [[ -d $app ]] || { echo "qbittorrent not installed, skipping"; return; }
+  if [[ ! -d $app ]]; then
+    mkdir -p /tmp/qbittorrent/mnt
+    curl -fL -o /tmp/qbittorrent/qbittorrent.dmg "https://sourceforge.net/projects/qbittorrent/files/qbittorrent-mac/qbittorrent-$version/qbittorrent-$version.dmg/download"
+    hdiutil attach -nobrowse -readonly -mountpoint /tmp/qbittorrent/mnt /tmp/qbittorrent/qbittorrent.dmg >/dev/null
+    cp -R /tmp/qbittorrent/mnt/qbittorrent.app "$app"
+    hdiutil detach /tmp/qbittorrent/mnt >/dev/null
+    rm -rf /tmp/qbittorrent
+    xattr -rd com.apple.quarantine "$app" 2>/dev/null
+  fi
   /usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist" >/dev/null 2>&1 && return
   /usr/libexec/PlistBuddy -c 'Add :LSUIElement bool true' "$app/Contents/Info.plist"
   codesign --force --deep -s - "$app"
@@ -65,7 +94,6 @@ seerr() {
   # Release tag to build (https://github.com/seerr-team/seerr/releases); upgrade steps are in README.md.
   local -r version=v3.5.2
   local -r node_bin=/opt/homebrew/opt/node@22/bin
-  [[ -x "$node_bin/node" ]] || HOMEBREW_NO_AUTO_UPDATE=1 brew install node@22
   export PATH="$node_bin:$PATH"
   if ! command -v pnpm >/dev/null; then
     curl -fsSL https://get.pnpm.io/install.sh | sh -
@@ -82,7 +110,6 @@ seerr() {
 }
 
 nginx() {
-  command -v nginx >/dev/null || HOMEBREW_NO_AUTO_UPDATE=1 brew install nginx
   sudo mkdir -p /usr/local/etc
   sudo ln -sfn "$PWD/nginx" /usr/local/etc/nginx
   sudo ln -sf "$PWD/nginx/nginx.conf" /opt/homebrew/etc/nginx/nginx.conf
@@ -90,7 +117,6 @@ nginx() {
 
 tls() {
   # https://go-acme.github.io/lego/ (certs are issued/renewed by launchctl/com.homelab.lego.plist)
-  command -v lego >/dev/null || HOMEBREW_NO_AUTO_UPDATE=1 brew install lego
   mkdir -p /usr/local/var/lego "$HOME/.config/homelab"
   [[ -f "$HOME/.config/homelab/cloudflare.env" ]] || echo "tls: add CF_DNS_API_TOKEN to ~/.config/homelab/cloudflare.env (mode 600)"
 }
@@ -103,6 +129,7 @@ logs() {
 main() {
   cd "$(dirname "$0")" || exit 1
   logs
+  packages
 
   plex
   radarr
