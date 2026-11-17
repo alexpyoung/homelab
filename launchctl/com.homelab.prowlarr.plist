@@ -10,6 +10,12 @@
     </array>
     <key>RunAtLoad</key>
     <true/>
+    <!-- Restart after a crash, but not after a clean exit (e.g. an app quitting to self-update). -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
     <key>StandardOutPath</key>
     <string>/usr/local/var/log/homelab.prowlarr.log</string>
     <key>StandardErrorPath</key>
