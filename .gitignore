@@ -4,3 +4,7 @@ homepage/config/logs/
 homepage/config/custom.css
 homepage/config/custom.js
 homepage/config/proxmox.yaml
+
+# Claude Code local state
+.claude/worktrees/
+.claude/settings.local.json
