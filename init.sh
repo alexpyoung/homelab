@@ -63,6 +63,8 @@ seerr() {
   # https://docs.seerr.dev/getting-started/buildfromsource
   # /opt/seerr/config holds Seerr's settings and database: never replace an existing install.
   [[ -d /opt/seerr ]] && { echo "seerr already installed, skipping"; return; }
+  # Release tag to build (https://github.com/seerr-team/seerr/releases); upgrade steps are in README.md.
+  local -r version=v3.5.2
   local -r node_bin=/opt/homebrew/opt/node@22/bin
   [[ -x "$node_bin/node" ]] || HOMEBREW_NO_AUTO_UPDATE=1 brew install node@22
   export PATH="$node_bin:$PATH"
@@ -72,7 +74,7 @@ seerr() {
     export PATH="$PNPM_HOME:$PATH"
   fi
   rm -rf /tmp/seerr
-  git clone --branch main https://github.com/seerr-team/seerr.git /tmp/seerr
+  git clone --branch "$version" https://github.com/seerr-team/seerr.git /tmp/seerr
   pushd /tmp/seerr || return
   CYPRESS_INSTALL_BINARY=0 pnpm install --frozen-lockfile
   pnpm build
