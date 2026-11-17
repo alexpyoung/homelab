@@ -72,7 +72,7 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 
 ### 5. Remaining gaps
 - [x] 2026-11-17: `init.sh` installs Plex, qBittorrent (pinned dmg; the cask was disabled 2026-09-01 for failing Gatekeeper), Docker Desktop and Tailscale (via `Brewfile`). `state.sh` backs up and restores app state; the new-machine runbook is in `README.md`. The restore path has only been tested against scratch directories, not on a clean Mac.
-- [ ] launchd jobs are bootstrapped from the repo's `launchctl/` directory, not `~/Library/LaunchAgents`, so they don't come back after a reboot until `./start.sh` is run.
+- [ ] launchd jobs were bootstrapped from the repo's `launchctl/` directory, so they didn't come back after a reboot. `init.sh` now symlinks the plists into `~/Library/LaunchAgents` (a symlinked plist bootstraps fine). Re-run `init.sh` on this Mac, then confirm after the next reboot that all `com.homelab.*` jobs are loaded without `./start.sh`.
 - [x] `init.sh` re-run safety: an earlier version wiped `/opt/seerr/config` (restored from a local APFS snapshot on 2026-11-15). It now skips existing installs, and the stray nested bundles from old runs were deleted 2026-11-16 (apps re-signed ad hoc).
 - [x] nginx has no `default_server`: unknown hosts fall through to the first vhost (FlareSolverr). Add a catch-all returning 444. Done 2026-11-16 (`return 444` + `ssl_reject_handshake`).
 - [x] `homepage.conf` proxies to `localhost:3000`, which nginx tries as `[::1]` first; Homepage only binds `127.0.0.1`, so every request logs a refused connection before falling back. Use `127.0.0.1:3000`. Done 2026-11-16.

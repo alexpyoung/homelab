@@ -121,6 +121,12 @@ tls() {
   [[ -f "$HOME/.config/homelab/cloudflare.env" ]] || echo "tls: add CF_DNS_API_TOKEN to ~/.config/homelab/cloudflare.env (mode 600)"
 }
 
+launchagents() {
+  # Jobs bootstrapped from the repo path are forgotten at reboot; launchd loads ~/Library/LaunchAgents at every login.
+  mkdir -p "$HOME/Library/LaunchAgents"
+  ln -sf "$PWD"/launchctl/*.plist "$HOME/Library/LaunchAgents/"
+}
+
 logs() {
   sudo mkdir -p /usr/local/var/log
   sudo chown "$USER" /usr/local/var/log
@@ -140,6 +146,7 @@ main() {
 
   tls
   nginx
+  launchagents
 }
 
 main "$@"
