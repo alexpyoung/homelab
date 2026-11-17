@@ -63,11 +63,11 @@ flowchart LR
             nginx{nginx}
         end
     end
-    Devices -."1. DNS lookup returns the Tailscale IP".-> cf
-    Devices --"2. https over the tailnet"--> nginx
-    lego --"DNS-01"--> cf
-    lego --> le
-    lego --"cert"--> nginx
+    Devices <-->|"DNS lookup"| cf
+    Devices --"https"--> nginx
+    lego <-.->|"DNS challenge"| cf
+    lego <-.->|"DNS challenge/SSL cert"| le
+    nginx -.->|"SSL cert"| lego
 ```
 Internal: what nginx fronts, and how the services talk to each other.
 ```mermaid
