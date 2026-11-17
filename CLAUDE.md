@@ -47,7 +47,7 @@ Flow: Seerr → Radarr/Sonarr ↔ Prowlarr → qBittorrent → filesystem ← Pl
 - **launchd:** use the modern `bootstrap` / `bootout` / `kickstart` / `print` subcommands with `gui/$(id -u)/<label>`, not `load`/`start`/`stop`.
 
 - **App settings outside the repo** (set in each app's UI or API; re-apply after a reinstall):
-  - Plex: Server version updates = "Ask me" (`init.sh` sets it).
+  - Plex: Server version updates = "Ask me" (`init.sh` sets it). Network → Custom server access URLs = `https://plex.lab.alexyoung.io:443`, so the apps can reach it over the tailnet (Plex advertises it via plex.tv).
   - Radarr/Sonarr/Prowlarr: Bind Address `127.0.0.1` (reachable only via nginx and Homepage); Authentication Required = "Disabled for Local Addresses" (they count private LAN IPs as local, so this is only safe while bound to localhost). nginx omits `X-Forwarded-For` for them so tailnet clients count as local.
   - qBittorrent: Web UI bound to `127.0.0.1` (reachable only via nginx), "Bypass authentication for clients on localhost" on.
 - launchd jobs use `KeepAlive` → `SuccessfulExit=false`: restart on crash, not after a clean exit (apps quit to self-update). Plist edits need `bootout` + `bootstrap` (kickstart keeps the old definition); a `bootstrap` right after `bootout` can fail with error 5 while the old job unloads: wait and retry. Quit Plex with `osascript -e 'tell application id "com.plexapp.plexmediaserver" to quit'` before a `bootout`; it ignores SIGTERM.
