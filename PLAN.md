@@ -97,7 +97,7 @@ Researched, not started. Pick up from here.
 - Devices with their own DNS (VPNs, iCloud Private Relay, browser DNS-over-HTTPS) ignore a router override. This Mac uses `10.2.0.1` (likely a VPN's DNS).
 
 **LAN exposure of app ports**
-- 2026-11-17: qBittorrent now binds `127.0.0.1` (Web UI only via nginx). The rest still listen on all interfaces, so anyone on the Wi-Fi can reach `192.168.1.161:<port>` directly, skipping nginx. The *arr apps treat private LAN addresses as local, so with "Disabled for Local Addresses" they open without a login on the Wi-Fi too: bind them to `127.0.0.1` (Settings > General > Bind Address) to close that. The macOS firewall is on, but its per-app rules are unverified: test from a phone on Wi-Fi with Tailscale off.
+- 2026-11-17: qBittorrent, Radarr, Sonarr and Prowlarr bind `127.0.0.1` (only via nginx and Homepage; verified unreachable on `192.168.1.161`). Still on all interfaces: Plex (expected for local clients) and Seerr (`:5055`, has its own login). FlareSolverr publishes `8191` on all interfaces via compose.
 - Fix: block incoming connections per app in the macOS firewall, or bind each app to localhost where it supports that. Plex on the LAN is expected (local clients discover it).
 
 ## Open questions
