@@ -49,7 +49,7 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 - [x] Fill `.env` from `.env.example`. qBittorrent has no Web UI login, so its two vars stay empty.
 - [x] Host cleanup: `/etc/hosts` homelab block, the root-owned `opt/` dir and `nginx/certs/` removed from the main checkout.
 - [x] First start (2026-11-15): nginx reloaded on the new vhosts, pre-compose `flaresolverr` container removed, `docker compose up -d` from the main checkout. Every `*.lab.alexyoung.io` name answers, and all Homepage widgets show live data.
-- [ ] **Deferred: public access.** `tv.alexyoung.io` / `watch.alexyoung.io` still CNAME to the stale `alexs-macbook-pro` name, so they're broken. Until then, either repoint them as A → `100.68.47.46` (tailnet-only) or remove them. Option to evaluate later: Cloudflare Tunnel for Seerr (custom domain, optional Cloudflare Access login), and Plex's built-in Remote Access for Plex (Cloudflare's terms forbid video streaming through the tunnel).
+- [x] Public hostnames removed (2026-11-16): `tv.alexyoung.io`, `watch.alexyoung.io` and `tv.vasvikejriwal.com` vhosts dropped; their DNS records were already gone. Public Seerr is next.
 
 ### 4. TLS — evaluation (2026-11-15)
 **Constraint:** the names resolve to a Tailscale CGNAT IP, so Let's Encrypt can't reach the server. The HTTP-01 and TLS-ALPN-01 challenges are out; **DNS-01 is the only option**, which needs API access to the DNS zone. DNS-01 also allows a wildcard cert (`*.lab.alexyoung.io` + `lab.alexyoung.io`): one cert for every service, with no per-service changes when services are added.
@@ -72,11 +72,10 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 
 ### 5. Remaining gaps
 - [ ] No `init.sh` functions for Plex/qBittorrent install, or for Docker Desktop. qBittorrent can't use Homebrew (cask disabled 2026-09-01 for failing Gatekeeper); it's installed by hand from the official dmg (5.2.3 as of 2026-11-16) and `init.sh` only keeps it dockless (`LSUIElement`).
-- [ ] `init.sh` re-run safety: an earlier version wiped `/opt/seerr/config` (restored from a local APFS snapshot on 2026-11-15). It now skips existing installs, but stray nested bundles (`/Applications/{Radarr,Sonarr,Prowlarr}.app/<App>.app`) from old runs are still on disk.
-- [ ] nginx has no `default_server`: unknown hosts fall through to the first vhost (FlareSolverr). Add a catch-all returning 444.
-- [ ] `homepage.conf` proxies to `localhost:3000`, which nginx tries as `[::1]` first; Homepage only binds `127.0.0.1`, so every request logs a refused connection before falling back. Use `127.0.0.1:3000`.
+- [x] `init.sh` re-run safety: an earlier version wiped `/opt/seerr/config` (restored from a local APFS snapshot on 2026-11-15). It now skips existing installs, and the stray nested bundles from old runs were deleted 2026-11-16 (apps re-signed ad hoc).
+- [x] nginx has no `default_server`: unknown hosts fall through to the first vhost (FlareSolverr). Add a catch-all returning 444. Done 2026-11-16 (`return 444` + `ssl_reject_handshake`).
+- [x] `homepage.conf` proxies to `localhost:3000`, which nginx tries as `[::1]` first; Homepage only binds `127.0.0.1`, so every request logs a refused connection before falling back. Use `127.0.0.1:3000`. Done 2026-11-16.
 - [x] 2026-11-16: blank Plex Web page over https. nginx temp dirs were owned by `nobody` (from a root-run nginx in March), so large responses were truncated and failed the page's integrity checks. Removed the empty dirs; nginx recreated them as the user.
 
 ## Open questions
-- Is `tv.vasvikejriwal.com` meant to stay? It probably has the same stale CNAME.
 - What prompted the Plex wrapper script — Full Disk Access/TCC, or the path with spaces?
