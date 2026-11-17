@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.homelab.lego</string>
+    <!-- Issues the lab.alexyoung.io + *.lab.alexyoung.io cert via Cloudflare DNS-01 (propagation checked against 1.1.1.1;
+         the local resolver caches the challenge TXT record),
+         then renews it when due (lego decides; a no-op otherwise) and reloads nginx.
+         The Cloudflare token lives outside the repo in ~/.config/homelab/cloudflare.env. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>exec /opt/homebrew/bin/lego run --accept-tos --dns cloudflare --dns.resolvers 1.1.1.1:53 --env-file "$HOME/.config/homelab/cloudflare.env" --path /usr/local/var/lego --domains lab.alexyoung.io --domains '*.lab.alexyoung.io' --deploy-hook '/opt/homebrew/bin/nginx -s reload' --log.format text</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>4</integer>
+        <key>Minute</key>
+        <integer>17</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/usr/local/var/log/homelab.lego.log</string>
+    <key>StandardErrorPath</key>
+    <string>/usr/local/var/log/homelab.lego.error.log</string>
+</dict>
+</plist>

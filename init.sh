@@ -84,6 +84,13 @@ nginx() {
   sudo ln -sf "$PWD/nginx/nginx.conf" /opt/homebrew/etc/nginx/nginx.conf
 }
 
+tls() {
+  # https://go-acme.github.io/lego/ (certs are issued/renewed by launchctl/com.homelab.lego.plist)
+  command -v lego >/dev/null || HOMEBREW_NO_AUTO_UPDATE=1 brew install lego
+  mkdir -p /usr/local/var/lego "$HOME/.config/homelab"
+  [[ -f "$HOME/.config/homelab/cloudflare.env" ]] || echo "tls: add CF_DNS_API_TOKEN to ~/.config/homelab/cloudflare.env (mode 600)"
+}
+
 logs() {
   sudo mkdir -p /usr/local/var/log
   sudo chown "$USER" /usr/local/var/log
@@ -100,6 +107,7 @@ main() {
   qbittorrent
   seerr
 
+  tls
   nginx
 }
 
