@@ -52,26 +52,52 @@ $ launchctl kickstart -k gui/$(id -u)/com.homelab.seerr
 ```
 ## Architecture
 ```mermaid
-flowchart
+flowchart LR
+    cf[Cloudflare DNS]
+    le[Let's Encrypt]
     subgraph tailnet
+        Device01
+        Device02
         subgraph homelab
             nginx{nginx}
+            lego
+            subgraph docker
+                homepage
+                flaresolverr
+            end
+            plex
+            seerr
+            radarr
+            sonarr
+            prowlarr
+            qbittorrent
+            fs[(filesystem)]
             nginx-->homepage
             nginx-->seerr
             nginx-->plex
+            nginx-->radarr
+            nginx-->sonarr
+            nginx-->prowlarr
+            nginx-->qbittorrent
+            nginx-->flaresolverr
+            homepage-."widgets".->seerr
             seerr-->radarr
             seerr-->sonarr
             seerr-->plex
             radarr<-->prowlarr
             sonarr<-->prowlarr
+            prowlarr-->flaresolverr
             prowlarr-->qbittorrent
-            fs[(filesystem)]
             qbittorrent-->fs
             plex-->fs
+            lego--"cert"-->nginx
         end
-        Device01--"*.lab.alexyoung.io"-->nginx
-        Device02--"*.lab.alexyoung.io"-->nginx
     end
+    Device01--"*.lab.alexyoung.io"-->nginx
+    Device02--"*.lab.alexyoung.io"-->nginx
+    Device01-."A record: Tailscale IP".->cf
+    lego--"DNS-01"-->cf
+    lego-->le
 ```
 ## Troubleshooting
 - **Blank Plex Web page / truncated downloads:** nginx can't write `/opt/homebrew/var/run/nginx/*_temp` (left owned by `nobody` after a root-run nginx). `rmdir` those empty dirs and `nginx -s reload`. Never run nginx with `sudo`.
