@@ -46,6 +46,16 @@ prowlarr() {
   rm -rf /tmp/prowlarr
 }
 
+qbittorrent() {
+  # Installed manually. Run it as an agent app (no Dock icon or menu bar); use the Web UI on :8080.
+  # Replacing the app drops the flag, so this re-applies it.
+  local -r app=/Applications/qBittorrent.app
+  [[ -d $app ]] || { echo "qbittorrent not installed, skipping"; return; }
+  /usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist" >/dev/null 2>&1 && return
+  /usr/libexec/PlistBuddy -c 'Add :LSUIElement bool true' "$app/Contents/Info.plist"
+  codesign --force --deep -s - "$app"
+}
+
 seerr() {
   # https://docs.seerr.dev/getting-started/buildfromsource
   # /opt/seerr/config holds Seerr's settings and database: never replace an existing install.
@@ -87,6 +97,7 @@ main() {
   radarr
   sonarr
   prowlarr
+  qbittorrent
   seerr
 
   nginx
