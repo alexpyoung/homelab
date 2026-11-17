@@ -74,7 +74,6 @@ Internal: what nginx fronts, and how the services talk to each other.
 flowchart LR
     subgraph tailnet
         nginx{nginx}
-        homepage
         flaresolverr
         plex
         seerr
@@ -84,7 +83,6 @@ flowchart LR
         qbittorrent
         fs[(filesystem)]
     end
-    nginx-->homepage
     nginx-->seerr
     nginx-->plex
     nginx-->radarr
@@ -92,7 +90,6 @@ flowchart LR
     nginx-->prowlarr
     nginx-->qbittorrent
     nginx-->flaresolverr
-    homepage-."widgets".->seerr
     seerr-->radarr
     seerr-->sonarr
     seerr-->plex
