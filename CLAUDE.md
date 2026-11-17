@@ -32,7 +32,7 @@ Flow: Seerr → Radarr/Sonarr ↔ Prowlarr → qBittorrent → filesystem ← Pl
 - `plex.sh` — wrapper that `exec`s Plex Media Server; symlinked to `/usr/local/bin/plex.sh` and used by the Plex plist.
 - `launchctl/com.homelab.<service>.plist` — LaunchAgents in the `gui/$(id -u)` domain. Logs (where configured) go to `/usr/local/var/log/homelab.<service>[.error].log`.
 - `nginx/nginx.conf` — sets the shared `ssl_certificate` (lego's `/usr/local/var/lego/certificates/lab.alexyoung.io.{crt,key}`) and a `:80` server that 301s every lab name to https; includes `/usr/local/etc/nginx/conf.d/*.conf`. `init.sh` symlinks `nginx/` → `/usr/local/etc/nginx` and `nginx.conf` → `/opt/homebrew/etc/nginx/nginx.conf`, so edits in the repo are live after an nginx reload.
-- `nginx/conf.d/<service>.conf` — one file per service: a `listen 443 ssl` server block for `<service>.lab.alexyoung.io` that `proxy_pass`es to `localhost:<port>` (the cert is inherited from `nginx.conf`).
+- `nginx/conf.d/<service>.conf` — one file per service: a `listen 443 ssl` server block for `<service>.lab.alexyoung.io` that `proxy_pass`es to `localhost:<port>` (the cert is inherited from `nginx.conf`). Proxy headers (Host, X-Forwarded-*, WebSocket Upgrade) are also set once in `nginx.conf`; don't add `proxy_set_header` in a vhost, or it stops inheriting all of them.
 - `compose.yaml` — FlareSolverr and Homepage, with pinned image tags.
 - `homepage/config/*.yaml` — Homepage config. Widget secrets are `{{HOMEPAGE_VAR_*}}` placeholders filled from a gitignored `.env` (template: `.env.example`). Widgets reach host services via `host.docker.internal`.
 - `nginx/nginx.conf` also has a `default_server` that closes connections (444, TLS handshake rejected) for any name without a vhost.
@@ -45,6 +45,12 @@ Flow: Seerr → Radarr/Sonarr ↔ Prowlarr → qBittorrent → filesystem ← Pl
 - **Adding a service** touches, in order: an `init.sh` function (+ call in `main`), `launchctl/com.homelab.<svc>.plist`, `nginx/conf.d/<svc>.conf` (copy an existing one, change `server_name` and port), and a tile in `homepage/config/services.yaml`. DNS and TLS are covered by the wildcard record and cert.
 - **Shell:** bash, `main() { ... }; main "$@"`, `local` vars, 2-space indent in `init.sh`, 4-space in `start.sh`/`stop.sh`. Target is macOS: BSD userland (`mv`, `sed`, etc. — no GNU long flags), `launchctl`, `plutil`, Homebrew at `/opt/homebrew`.
 - **launchd:** use the modern `bootstrap` / `bootout` / `kickstart` / `print` subcommands with `gui/$(id -u)/<label>`, not `load`/`start`/`stop`.
+
+- **App settings outside the repo** (set in each app's UI or API; re-apply after a reinstall):
+  - Plex: Server version updates = "Ask me" (`init.sh` sets it).
+  - Radarr/Sonarr/Prowlarr: Authentication Required = "Disabled for Local Addresses". nginx omits `X-Forwarded-For` for them so tailnet clients count as local.
+  - qBittorrent: Web UI bound to `127.0.0.1` (reachable only via nginx), "Bypass authentication for clients on localhost" on.
+- launchd jobs use `KeepAlive` → `SuccessfulExit=false`: restart on crash, not after a clean exit (apps quit to self-update).
 
 ## Working here
 
