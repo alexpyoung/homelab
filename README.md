@@ -51,53 +51,55 @@ $ CYPRESS_INSTALL_BINARY=0 pnpm install --frozen-lockfile && pnpm build
 $ launchctl kickstart -k gui/$(id -u)/com.homelab.seerr
 ```
 ## Architecture
+External: how a device reaches the homelab, and where the cert comes from.
 ```mermaid
 flowchart LR
+    Devices
     cf[Cloudflare DNS]
     le[Let's Encrypt]
-    subgraph tailnet
-        Device01
-        Device02
-        subgraph homelab
-            nginx{nginx}
-            lego
-            subgraph docker
-                homepage
-                flaresolverr
-            end
-            plex
-            seerr
-            radarr
-            sonarr
-            prowlarr
-            qbittorrent
-            fs[(filesystem)]
-            nginx-->homepage
-            nginx-->seerr
-            nginx-->plex
-            nginx-->radarr
-            nginx-->sonarr
-            nginx-->prowlarr
-            nginx-->qbittorrent
-            nginx-->flaresolverr
-            homepage-."widgets".->seerr
-            seerr-->radarr
-            seerr-->sonarr
-            seerr-->plex
-            radarr<-->prowlarr
-            sonarr<-->prowlarr
-            prowlarr-->flaresolverr
-            prowlarr-->qbittorrent
-            qbittorrent-->fs
-            plex-->fs
-            lego--"cert"-->nginx
-        end
+    subgraph homelab
+        lego
+        nginx{nginx}
     end
-    Device01--"*.lab.alexyoung.io"-->nginx
-    Device02--"*.lab.alexyoung.io"-->nginx
-    Device01-."A record: Tailscale IP".->cf
-    lego--"DNS-01"-->cf
-    lego-->le
+    Devices -."1. DNS lookup returns the Tailscale IP".-> cf
+    Devices --"2. https over the tailnet"--> nginx
+    lego --"DNS-01"--> cf
+    lego --> le
+    lego --"cert"--> nginx
+```
+Internal: what nginx fronts, and how the services talk to each other.
+```mermaid
+flowchart LR
+    nginx{nginx}
+    subgraph docker
+        homepage
+        flaresolverr
+    end
+    plex
+    seerr
+    radarr
+    sonarr
+    prowlarr
+    qbittorrent
+    fs[(filesystem)]
+    nginx-->homepage
+    nginx-->seerr
+    nginx-->plex
+    nginx-->radarr
+    nginx-->sonarr
+    nginx-->prowlarr
+    nginx-->qbittorrent
+    nginx-->flaresolverr
+    homepage-."widgets".->seerr
+    seerr-->radarr
+    seerr-->sonarr
+    seerr-->plex
+    radarr<-->prowlarr
+    sonarr<-->prowlarr
+    prowlarr-->flaresolverr
+    prowlarr-->qbittorrent
+    qbittorrent-->fs
+    plex-->fs
 ```
 ## Troubleshooting
 - **Blank Plex Web page / truncated downloads:** nginx can't write `/opt/homebrew/var/run/nginx/*_temp` (left owned by `nobody` after a root-run nginx). `rmdir` those empty dirs and `nginx -s reload`. Never run nginx with `sudo`.
