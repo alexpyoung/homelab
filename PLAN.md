@@ -64,12 +64,11 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 | Tailscale certs (`tailscale cert` / `serve`) | Only issues certs for `*.ts.net` names, not `lab.alexyoung.io`. |
 | Manual DNS-01 | Not resilient: Let's Encrypt lifetimes are shrinking (90 → 45 days), so this would be a recurring chore. |
 
-**Proposed implementation (after the DNS move):**
-- [ ] Cloudflare: add the zone, verify the imported records, switch nameservers at Namecheap. Keep `lab` / `*.lab` **DNS-only (grey cloud)**: proxied records can't reach a `100.x` IP.
-- [ ] API token scoped to `Zone:DNS:Edit` on `alexyoung.io`, stored outside the repo (e.g. `~/.config/homelab/cloudflare.env`, mode 600).
-- [ ] `init.sh tls()`: `brew install lego`, then the first issue for `lab.alexyoung.io` + `*.lab.alexyoung.io` into a cert dir outside the repo.
-- [ ] `launchctl/com.homelab.lego-renew.plist`: daily `StartCalendarInterval` running `lego renew --days 30 --renew-hook "nginx -s reload"`.
-- [ ] nginx: one shared `ssl` snippet included by every vhost; `listen 443 ssl`; `:80` → 301 to https; switch Homepage `href`s to https.
+**Implemented (2026-11-16):**
+- [x] DNS moved to Cloudflare (Namecheap stays registrar); all records DNS-only (grey cloud): GitHub Pages apex/www, Fastmail MX/SPF/DKIM, `lab` / `*.lab`.
+- [x] API token with `Zone:DNS:Edit` + `Zone:Zone:Read` on `alexyoung.io`, in `~/.config/homelab/cloudflare.env` (mode 600).
+- [x] `launchctl/com.homelab.lego.plist`: `lego run` (v5 issues and renews in one command, renewing only when due) at load and daily at 04:17, deploy hook `nginx -s reload`. Propagation is checked against `1.1.1.1` because the local resolver caches the challenge TXT record. Account and certs in `/usr/local/var/lego` — back it up.
+- [x] nginx: shared `ssl_certificate` in `nginx.conf`, every lab vhost on `listen 443 ssl`, `:80` → 301 to https, `X-Forwarded-Proto` passed; Homepage `href`s on https.
 
 ### 5. Remaining gaps
 - [ ] No `init.sh` functions for Plex/qBittorrent install, or for Docker Desktop. qBittorrent can't use Homebrew (cask disabled 2026-09-01 for failing Gatekeeper); it's installed by hand from the official dmg (5.2.3 as of 2026-11-16) and `init.sh` only keeps it dockless (`LSUIElement`).
