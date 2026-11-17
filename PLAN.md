@@ -77,6 +77,8 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 - [x] `homepage.conf` proxies to `localhost:3000`, which nginx tries as `[::1]` first; Homepage only binds `127.0.0.1`, so every request logs a refused connection before falling back. Use `127.0.0.1:3000`. Done 2026-11-16.
 - [x] 2026-11-16: blank Plex Web page over https. nginx temp dirs were owned by `nobody` (from a root-run nginx in March), so large responses were truncated and failed the page's integrity checks. Removed the empty dirs; nginx recreated them as the user.
 
+- [x] 2026-11-17 hardening: launchd `KeepAlive` on crash; Plex self-update off (it had relaunched outside launchd); nginx passes WebSockets and sets proxy headers once; Seerr pinned to `v3.5.2`; qBittorrent Web UI on localhost; *arr login skipped for tailnet clients.
+
 ### 6. Deferred options (2026-11-16)
 Researched, not started. Pick up from here.
 
@@ -95,7 +97,7 @@ Researched, not started. Pick up from here.
 - Devices with their own DNS (VPNs, iCloud Private Relay, browser DNS-over-HTTPS) ignore a router override. This Mac uses `10.2.0.1` (likely a VPN's DNS).
 
 **LAN exposure of app ports**
-- Every app except Homepage listens on all interfaces, so anyone on the Wi-Fi can reach `192.168.1.161:<port>` directly, skipping nginx (qBittorrent has no login). The macOS firewall is on, but its per-app rules are unverified: test from a phone on Wi-Fi with Tailscale off.
+- 2026-11-17: qBittorrent now binds `127.0.0.1` (Web UI only via nginx). The rest still listen on all interfaces, so anyone on the Wi-Fi can reach `192.168.1.161:<port>` directly, skipping nginx. The *arr apps treat private LAN addresses as local, so with "Disabled for Local Addresses" they open without a login on the Wi-Fi too: bind them to `127.0.0.1` (Settings > General > Bind Address) to close that. The macOS firewall is on, but its per-app rules are unverified: test from a phone on Wi-Fi with Tailscale off.
 - Fix: block incoming connections per app in the macOS firewall, or bind each app to localhost where it supports that. Plex on the LAN is expected (local clients discover it).
 
 ## Open questions
