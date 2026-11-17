@@ -17,6 +17,20 @@ $ tail -f ~/Library/Application\ Support/Radarr/logs/radarr.debug.txt
 ```
 $ dig +short seerr.lab.alexyoung.io   # expect the homelab's Tailscale IP
 ```
+### Restart a service
+```
+$ launchctl kickstart -k gui/$(id -u)/com.homelab.<service>
+```
+### Update Plex
+Auto-update is off (it relaunches Plex outside launchd). Install the new version over the old one, then restart `com.homelab.plex`.
+### Update Seerr
+Bump `version` in `init.sh`'s `seerr()`, then:
+```
+$ cp -Rp /opt/seerr/config ~/seerr-config-backup
+$ cd /opt/seerr && git fetch --tags && git checkout vX.Y.Z
+$ CYPRESS_INSTALL_BINARY=0 pnpm install --frozen-lockfile && pnpm build
+$ launchctl kickstart -k gui/$(id -u)/com.homelab.seerr
+```
 ## Architecture
 ```mermaid
 flowchart
