@@ -12,7 +12,8 @@ Personal media homelab running natively on a single Apple Silicon Mac. FlareSolv
 
 | Service      | Role                          | Runs as                                   | Port  |
 |--------------|-------------------------------|-------------------------------------------|-------|
-| nginx        | Reverse proxy (vhosts)        | launchd → `/opt/homebrew/bin/nginx`       | 80    |
+| nginx        | Reverse proxy (vhosts), TLS   | launchd → `/opt/homebrew/bin/nginx`       | 80, 443 |
+| lego         | Let's Encrypt cert (daily)   | launchd → `/opt/homebrew/bin/lego`        | —     |
 | Homepage     | Dashboard at `lab.alexyoung.io` | Docker (compose), bound to 127.0.0.1    | 3000  |
 | Seerr        | Request UI (public)           | launchd → node@22 `/opt/seerr/dist/index.js` | 5055 |
 | Plex         | Media server (public WIP)     | launchd → Plex Media Server.app           | 32400 |
@@ -30,16 +31,17 @@ Flow: Seerr → Radarr/Sonarr ↔ Prowlarr → qBittorrent → filesystem ← Pl
 - `start.sh` / `stop.sh` — start/stop everything. `start.sh` iterates `launchctl/*.plist`, reads each `Label` via `plutil`, and `kickstart -k`s if loaded or `bootstrap`s if not (idempotent). `stop.sh` `bootout`s every loaded `com.homelab.*` job. Both also run `docker compose up -d` / `stop` for the containers. All three scripts `cd` to their own directory first.
 - `plex.sh` — wrapper that `exec`s Plex Media Server; symlinked to `/usr/local/bin/plex.sh` and used by the Plex plist.
 - `launchctl/com.homelab.<service>.plist` — LaunchAgents in the `gui/$(id -u)` domain. Logs (where configured) go to `/usr/local/var/log/homelab.<service>[.error].log`.
-- `nginx/nginx.conf` — minimal; includes `/usr/local/etc/nginx/conf.d/*.conf`. `init.sh` symlinks `nginx/` → `/usr/local/etc/nginx` and `nginx.conf` → `/opt/homebrew/etc/nginx/nginx.conf`, so edits in the repo are live after an nginx reload.
-- `nginx/conf.d/<service>.conf` — one file per service: a `:80` server block for `<service>.lab.alexyoung.io` that `proxy_pass`es to `localhost:<port>`. Public hostnames (`tv`, `watch`) get an extra server block in the same file. HTTP only for now; TLS is planned.
+- `nginx/nginx.conf` — sets the shared `ssl_certificate` (lego's `/usr/local/var/lego/certificates/lab.alexyoung.io.{crt,key}`) and a `:80` server that 301s every lab name to https; includes `/usr/local/etc/nginx/conf.d/*.conf`. `init.sh` symlinks `nginx/` → `/usr/local/etc/nginx` and `nginx.conf` → `/opt/homebrew/etc/nginx/nginx.conf`, so edits in the repo are live after an nginx reload.
+- `nginx/conf.d/<service>.conf` — one file per service: a `listen 443 ssl` server block for `<service>.lab.alexyoung.io` that `proxy_pass`es to `localhost:<port>` (the cert is inherited from `nginx.conf`). Public hostnames (`tv`, `watch`) get an extra `:80` server block in the same file.
 - `compose.yaml` — FlareSolverr and Homepage, with pinned image tags.
 - `homepage/config/*.yaml` — Homepage config. Widget secrets are `{{HOMEPAGE_VAR_*}}` placeholders filled from a gitignored `.env` (template: `.env.example`). Widgets reach host services via `host.docker.internal`.
 - nginx runs in the foreground (`-g 'daemon off;'` in its plist) so launchd can supervise it. Don't remove that.
+- TLS: `launchctl/com.homelab.lego.plist` runs `lego run` at load and daily; it proves control via Cloudflare DNS-01 (token in `~/.config/homelab/cloudflare.env`, outside the repo), renews only when due and reloads nginx. One wildcard cert covers every `*.lab` service.
 
 ## Conventions
 
 - **Commits:** Conventional Commits, scope = service or component: `feat(sonarr): run bin via launchctl`, `fix(launchctl): makes scripts idempotent`, `doc(README): ...`. The author uses `git commit --fixup` + autosquash; don't push `fixup ...` commits — squash them first.
-- **Adding a service** touches, in order: an `init.sh` function (+ call in `main`), `launchctl/com.homelab.<svc>.plist`, `nginx/conf.d/<svc>.conf` (copy an existing one, change `server_name` and port), and a tile in `homepage/config/services.yaml`. DNS is covered by the wildcard record.
+- **Adding a service** touches, in order: an `init.sh` function (+ call in `main`), `launchctl/com.homelab.<svc>.plist`, `nginx/conf.d/<svc>.conf` (copy an existing one, change `server_name` and port), and a tile in `homepage/config/services.yaml`. DNS and TLS are covered by the wildcard record and cert.
 - **Shell:** bash, `main() { ... }; main "$@"`, `local` vars, 2-space indent in `init.sh`, 4-space in `start.sh`/`stop.sh`. Target is macOS: BSD userland (`mv`, `sed`, etc. — no GNU long flags), `launchctl`, `plutil`, Homebrew at `/opt/homebrew`.
 - **launchd:** use the modern `bootstrap` / `bootout` / `kickstart` / `print` subcommands with `gui/$(id -u)/<label>`, not `load`/`start`/`stop`.
 
