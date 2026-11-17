@@ -74,10 +74,8 @@ Internal: what nginx fronts, and how the services talk to each other.
 flowchart LR
     subgraph tailnet
         nginx{nginx}
-        subgraph docker
-            homepage
-            flaresolverr
-        end
+        homepage
+        flaresolverr
         plex
         seerr
         radarr
