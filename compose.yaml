@@ -7,7 +7,7 @@ services:
     environment:
       LOG_LEVEL: info
     ports:
-      - 8191:8191
+      - 127.0.0.1:8191:8191
     restart: unless-stopped
 
   homepage:
