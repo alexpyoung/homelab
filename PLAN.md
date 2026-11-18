@@ -1,6 +1,6 @@
 # PLAN.md
 
-Snapshot as of 2026-11-15. Last commit 2026-06-09; the repo has been idle ~5 months.
+Started 2026-11-15, after ~5 months idle (previous commit 2026-06-09). Last updated 2026-11-17.
 
 ## History
 
@@ -45,7 +45,7 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 - [x] Names: `<service>.lab.alexyoung.io`, plus `lab.alexyoung.io` → Homepage. Subdomains, not paths: Plex and Seerr don't support a base path (Seerr's docs: "Base URLs cannot be configured").
 - [x] Dropped `.lab`, the `hosts` file and `/etc/hosts` management, and the self-signed TLS redirect blocks.
 - [x] Homepage v2.8.0 (Docker, compose) with widgets for Plex, Seerr, Radarr, Sonarr, Prowlarr and qBittorrent. FlareSolverr moved into the same `compose.yaml`, pinned to v3.5.2.
-- [x] **DNS records (at Namecheap):** `lab` A `100.68.47.46` and `*.lab` A `100.68.47.46`. Use A records, not a CNAME to `*.ts.net`; the CNAME broke when the machine was renamed from `alexs-macbook-pro` to `alexs-homelab`.
+- [x] **DNS records (at Namecheap, moved to Cloudflare in §4):** `lab` A `100.68.47.46` and `*.lab` A `100.68.47.46`. Use A records, not a CNAME to `*.ts.net`; the CNAME broke when the machine was renamed from `alexs-macbook-pro` to `alexs-homelab`.
 - [x] Fill `.env` from `.env.example`. qBittorrent has no Web UI login, so its two vars stay empty.
 - [x] Host cleanup: `/etc/hosts` homelab block, the root-owned `opt/` dir and `nginx/certs/` removed from the main checkout.
 - [x] First start (2026-11-15): nginx reloaded on the new vhosts, pre-compose `flaresolverr` container removed, `docker compose up -d` from the main checkout. Every `*.lab.alexyoung.io` name answers, and all Homepage widgets show live data.
@@ -72,7 +72,7 @@ Goal: easy, resilient access to every service from the host and the tailnet; lim
 
 ### 5. Remaining gaps
 - [x] 2026-11-17: `init.sh` installs Plex, qBittorrent (pinned dmg; the cask was disabled 2026-09-01 for failing Gatekeeper), Docker Desktop and Tailscale (via `Brewfile`). `state.sh` backs up and restores app state; the new-machine runbook is in `README.md`. The restore path has only been tested against scratch directories, not on a clean Mac.
-- [ ] launchd jobs were bootstrapped from the repo's `launchctl/` directory, so they didn't come back after a reboot. `init.sh` now symlinks the plists into `~/Library/LaunchAgents` (a symlinked plist bootstraps fine). Re-run `init.sh` on this Mac, then confirm after the next reboot that all `com.homelab.*` jobs are loaded without `./start.sh`.
+- [ ] launchd jobs were bootstrapped from the repo's `launchctl/` directory, so they didn't come back after a reboot. `init.sh` now symlinks the plists into `~/Library/LaunchAgents` (a symlinked plist bootstraps fine); the links were created on this Mac 2026-11-17. Confirm after the next reboot that all `com.homelab.*` jobs are loaded without `./start.sh`.
 - [x] `init.sh` re-run safety: an earlier version wiped `/opt/seerr/config` (restored from a local APFS snapshot on 2026-11-15). It now skips existing installs, and the stray nested bundles from old runs were deleted 2026-11-16 (apps re-signed ad hoc).
 - [x] nginx has no `default_server`: unknown hosts fall through to the first vhost (FlareSolverr). Add a catch-all returning 444. Done 2026-11-16 (`return 444` + `ssl_reject_handshake`).
 - [x] `homepage.conf` proxies to `localhost:3000`, which nginx tries as `[::1]` first; Homepage only binds `127.0.0.1`, so every request logs a refused connection before falling back. Use `127.0.0.1:3000`. Done 2026-11-16.
@@ -98,7 +98,7 @@ Researched, not started. Pick up from here.
 - Devices with their own DNS (VPNs, iCloud Private Relay, browser DNS-over-HTTPS) ignore a router override. This Mac uses `10.2.0.1` (likely a VPN's DNS).
 
 **LAN exposure of app ports**
-- 2026-11-17: qBittorrent, Radarr, Sonarr and Prowlarr bind `127.0.0.1` (only via nginx and Homepage; verified unreachable on `192.168.1.161`). Still on all interfaces: Plex (expected for local clients) and Seerr (`:5055`, has its own login). FlareSolverr publishes `8191` on all interfaces via compose.
+- 2026-11-17: qBittorrent, Radarr, Sonarr and Prowlarr bind `127.0.0.1` (only via nginx and Homepage; verified unreachable on `192.168.1.161`). FlareSolverr publishes `8191` on `127.0.0.1` only (2026-11-17). Still on all interfaces: Plex (expected for local clients) and Seerr (`:5055`, has its own login).
 - Fix: block incoming connections per app in the macOS firewall, or bind each app to localhost where it supports that. Plex on the LAN is expected (local clients discover it).
 
 ## Open questions
