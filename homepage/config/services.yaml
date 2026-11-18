@@ -35,10 +35,19 @@
     - Prowlarr:
         icon: prowlarr.png
         href: https://prowlarr.lab.alexyoung.io
-        widget:
-          type: prowlarr
-          url: http://host.docker.internal:9696
-          key: "{{HOMEPAGE_VAR_PROWLARR_KEY}}"
+        widgets:
+          - type: prowlarr
+            url: http://host.docker.internal:9696
+            key: "{{HOMEPAGE_VAR_PROWLARR_KEY}}"
+          # Indexers Prowlarr has disabled after repeated failures (the list empties as they recover).
+          - type: customapi
+            url: http://host.docker.internal:9696/api/v1/indexerstatus
+            headers:
+              X-Api-Key: "{{HOMEPAGE_VAR_PROWLARR_KEY}}"
+            refreshInterval: 60000
+            mappings:
+              - label: Failing indexers
+                format: size
     - qBittorrent:
         icon: qbittorrent.png
         href: https://qbittorrent.lab.alexyoung.io
