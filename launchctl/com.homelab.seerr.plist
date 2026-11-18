@@ -13,6 +13,9 @@
     <dict>
     <key>NODE_ENV</key>
     <string>production</string>
+    <!-- Listen on localhost only: reachable via nginx and Homepage, not directly from the LAN. -->
+    <key>HOST</key>
+    <string>127.0.0.1</string>
     </dict>
     <key>WorkingDirectory</key>
     <string>/opt/seerr</string>
