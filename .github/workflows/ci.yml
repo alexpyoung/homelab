@@ -10,3 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: shellcheck *.sh
+
+  plutil:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: plutil -lint launchctl/*.plist
