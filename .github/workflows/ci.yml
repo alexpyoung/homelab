@@ -22,3 +22,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker compose config --quiet
+
+  nginx:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Recreate the host's paths: conf.d at /usr/local/etc/nginx, and a throwaway cert where lego puts the real one.
+      - run: |
+          sudo mkdir -p /usr/local/etc/nginx /usr/local/var/lego/certificates
+          sudo ln -s "$PWD/nginx/conf.d" /usr/local/etc/nginx/conf.d
+          sudo openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj /CN=lab.alexyoung.io \
+            -keyout /usr/local/var/lego/certificates/lab.alexyoung.io.key \
+            -out /usr/local/var/lego/certificates/lab.alexyoung.io.crt
+      - run: sudo nginx -t -c "$PWD/nginx/nginx.conf"
