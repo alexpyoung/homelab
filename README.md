@@ -8,6 +8,7 @@ $ cp .env.example .env   # fill in Homepage widget keys
 $ $EDITOR ~/.config/homelab/cloudflare.env   # CF_DNS_API_TOKEN=... (Zone:DNS:Edit + Zone:Read on alexyoung.io), chmod 600
 $ ./start.sh
 ```
+The services are LaunchAgents, so they start when you log in, not at boot. After a power cut or an update reboot nothing runs until someone logs in. To start them unattended, turn on automatic login (System Settings → Users & Groups); macOS only offers it while FileVault is off.
 ## Moving to a new machine
 Needs an Apple Silicon Mac. Everything is in this repo except app state (databases, API keys, tokens) and media, which sits on the `Lucy` drive.
 
