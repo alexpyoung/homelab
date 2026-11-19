@@ -4,8 +4,12 @@
 <dict>
     <key>Label</key>
     <string>com.homelab.radarr</string>
+    <!-- Wait for Lucy: at boot it can mount after login, and the app would start without media. -->
     <key>ProgramArguments</key>
     <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>until [ -d /Volumes/Lucy/torrents ]; do sleep 5; done; exec "$0"</string>
         <string>/Applications/Radarr.app/Contents/MacOS/Radarr</string>
     </array>
     <key>RunAtLoad</key>
