@@ -130,6 +130,7 @@ launchagents() {
 logs() {
   sudo mkdir -p /usr/local/var/log
   sudo chown "$USER" /usr/local/var/log
+  sed "s/@USER@/$USER/" newsyslog/homelab.conf | sudo tee /etc/newsyslog.d/homelab.conf >/dev/null
 }
 
 main() {
