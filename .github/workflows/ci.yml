@@ -16,3 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: plutil -lint launchctl/*.plist
+
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config --quiet
